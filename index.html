@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jetstream Density Flight</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    color: #fff;
+    font-family: "Courier New", monospace;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: #000;
+  }
+
+  #hudTopLeft {
+    position: fixed;
+    left: 12px;
+    top: 12px;
+    background: #000;
+    border: 2px solid #fff;
+    padding: 10px 14px;
+    line-height: 1.3;
+    font-size: 24px;
+    white-space: pre-line;
+    pointer-events: none;
+    z-index: 10;
+    color: #fff;
+    text-align: left;
+    min-width: 300px;
+  }
+
+  #hudBottom {
+    position: fixed;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    background: #000;
+    border: 2px solid #fff;
+    padding: 8px 14px;
+    line-height: 1.3;
+    font-size: 18px;
+    white-space: pre-line;
+    pointer-events: none;
+    z-index: 10;
+    color: #fff;
+    text-align: center;
+    min-width: 420px;
+  }
+
+  #helpHint,
+  #help {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+    background: #000;
+    border: 2px solid #fff;
+    padding: 10px 12px;
+    line-height: 1.35;
+    font-size: 14px;
+    max-width: 390px;
+    pointer-events: none;
+    z-index: 10;
+    color: #fff;
+  }
+
+  #helpHint[hidden],
+  #help[hidden] {
+    display: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hudTopLeft"></div>
+<div id="hudBottom"></div>
+<div id="helpHint">Press H for Instructions</div>
+<div id="help" hidden>
+  <strong>JETSTREAM FINDER</strong><br>
+  Up / W: climb<br>
+  Down / S: descend<br>
+  Space: damp vertical speed<br><br>
+  Warm air raises the jetstream band.<br>
+  Cold air lowers it.<br>
+  Speed increases in the jetstream.<br>
+  Press R to restart.<br><br>
+  <strong>Press H to Hide Instructions</strong>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  const hudTopLeft = document.getElementById("hudTopLeft");
+  const hudBottom = document.getElementById("hudBottom");
+  const help = document.getElementById("help");
+  const helpHint = document.getElementById("helpHint");
+
+  function clamp(v, lo, hi) {
+    return Math.max(lo, Math.min(hi, v));
+  }
+
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  function formatTime(seconds) {
+    const whole = Math.max(0, Math.floor(seconds));
+    const mins = Math.floor(whole / 60);
+    const secs = whole % 60;
+    return `${mins}:${String(secs).padStart(2, "0")}`;
+  }
+
+  const keys = {};
+  let helpVisible = false;
+
+  function syncHelp() {
+    help.hidden = !helpVisible;
+    helpHint.hidden = helpVisible;
+  }
+
+  const STATE_START = "start";
+  const STATE_PLAYING = "playing";
+  const STATE_CRASHED = "crashed";
+  const STATE_FINISHED = "finished";
+  let gameState = STATE_START;
+
+  const ROUTE_MILES = 2401;
+  const FEET_PER_MILE = 5280;
+  const ROUTE_FEET = ROUTE_MILES * FEET_PER_MILE;
+  const TRIP_PROGRESS_SCALE = 7;
+  const CITY_GROUND_PADDING_FEET = 2600;
+  const START_CITY_X = 5000;
+  const FINISH_CITY_X = ROUTE_FEET + 12000;
+
+  function startRun() {
+    if (gameState === STATE_START) {
+      gameState = STATE_PLAYING;
+      lastTime = performance.now();
+    }
+  }
+
+  function balloonBobOffset() {
+    return balloonBurst ? 0 : Math.sin(timeElapsed * 2.2) * 2;
+  }
+
+  function smokeSourceX() {
+    return planeScreenX() + 18;
+  }
+
+  function smokeSourceY() {
+    const basketY = planeScreenY() + balloonBobOffset();
+    return basketY - 2;
+  }
+
+  function releaseSmokeBoost() {
+    if (smoke.inventory <= 0 || gameState !== STATE_PLAYING) return;
+    smoke.inventory--;
+    smoke.boostTimer = 2.4;
+    const sourceX = smokeSourceX();
+    const sourceY = smokeSourceY();
+    for (let i = 0; i < 22; i++) {
+      smoke.trail.push({
+        x: sourceX - i * 4,
+        y: sourceY + (Math.random() * 6 - 3),
+        vx: -100 - Math.random() * 180,
+        vy: -16 + Math.random() * 32,
+        life: 0.8 + Math.random() * 0.6,
+        maxLife: 0.8 + Math.random() * 0.6
+      });
+    }
+  }
+
+  window.addEventListener("keydown", e => {
+    const k = e.key.toLowerCase();
+    keys[k] = true;
+    if (["arrowup", "arrowdown", " ", "w", "s", "h", "enter"].includes(k)) e.preventDefault();
+    if (k === "h") {
+      helpVisible = !helpVisible;
+      syncHelp();
+    }
+    if ((k === " " || k === "enter") && gameState === STATE_START) {
+      startRun();
+    } else if (k === " " && gameState === STATE_PLAYING && smoke.inventory > 0) {
+      releaseSmokeBoost();
+    }
+    if ((gameState === STATE_CRASHED || gameState === STATE_FINISHED) && k === "r") resetGame();
+  });
+
+  window.addEventListener("keyup", e => {
+    keys[e.key.toLowerCase()] = false;
+  });
+
+  window.addEventListener("mousedown", () => {
+    if (gameState === STATE_START) startRun();
+  });
+
+  const PLANE_X_FRAC = 0.25;
+  const PLANE_Y_FRAC = 0.48;
+  const SCREEN_FT_PER_PIXEL = 80;
+
+  const GROUND_FEET_MSL = 0;
+  const JET_BAND_HALF_THICKNESS = 1400;
+  const SEA_LEVEL_PRESSURE_MB = 1013.25;
+  const JETSTREAM_PRESSURE_MB = 300;
+  const SPACE_FADE_START_FEET = 90000;
+  const BALLOON_BURST_FEET = 200000;
+
+  const plane = {
+    xFeet: 0,
+    yFeetMSL: 8000,
+    vy: 0,
+    baseForwardSpeed: 1850,
+    forwardSpeed: 1850,
+    climbAccel: 22800,
+    drag: 0.945,
+    maxClimb: 11800,
+    maxDescent: -11800
+  };
+
+  const world = {
+    trees: [],
+    critters: [],
+    lowClouds: [],
+    nextClusterX: 0,
+    clusterSeed: 0,
+    stars: []
+  };
+
+  const air = {
+    stepPx: 8,
+    offsetPx: 0,
+    tempCols: [],
+    currentTemp: -35,
+    targetTemp: -35,
+    segmentRemaining: 0
+  };
+
+  const smoke = {
+    canisters: [],
+    trail: [],
+    spawnTimer: 2.5,
+    inventory: 0,
+    boostTimer: 0
+  };
+
+  let score = 0;
+  let timeElapsed = 0;
+  let lastTime = performance.now();
+  let sunAngle = 0;
+  let balloonBurst = false;
+  let burstTimer = 0;
+  let burstPieces = [];
+
+  function planeScreenX() {
+    return Math.floor(canvas.width * PLANE_X_FRAC);
+  }
+
+  function planeScreenY() {
+    return Math.floor(canvas.height * PLANE_Y_FRAC);
+  }
+
+  function screenYFromFeet(feetMSL) {
+    return planeScreenY() - (feetMSL - plane.yFeetMSL) / SCREEN_FT_PER_PIXEL;
+  }
+
+  function worldXToScreenX(worldFeet) {
+    return planeScreenX() + (worldFeet - plane.xFeet) / SCREEN_FT_PER_PIXEL;
+  }
+
+  function tripProgressFeet() {
+    return plane.xFeet * TRIP_PROGRESS_SCALE;
+  }
+
+  function spaceFadeAlpha() {
+    return clamp((plane.yFeetMSL - SPACE_FADE_START_FEET) / (BALLOON_BURST_FEET - SPACE_FADE_START_FEET), 0, 1);
+  }
+
+  function initStars() {
+    world.stars = [];
+    const count = Math.max(80, Math.floor((canvas.width * canvas.height) / 9000));
+    for (let i = 0; i < count; i++) {
+      world.stars.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height * 0.78,
+        size: Math.random() < 0.82 ? 1 : 2,
+        twinkle: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function burstBalloon() {
+    if (balloonBurst) return;
+    balloonBurst = true;
+    burstTimer = 1.8;
+    burstPieces = [];
+    const px = planeScreenX() + 18;
+    const py = planeScreenY() - 30;
+    for (let i = 0; i < 16; i++) {
+      const a = (Math.PI * 2 * i) / 16 + Math.random() * 0.18;
+      const speed = 80 + Math.random() * 180;
+      burstPieces.push({
+        x: px,
+        y: py,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed - 40,
+        life: 0.8 + Math.random() * 0.8,
+        maxLife: 0.8 + Math.random() * 0.8
+      });
+    }
+    plane.vy = Math.min(plane.vy, -22000);
+  }
+
+  function nextAirTemp() {
+    if (air.segmentRemaining <= 0) {
+      air.segmentRemaining = Math.floor(8 + Math.random() * 18);
+
+      let nextTarget = air.currentTemp + (-8 + Math.random() * 16);
+      if (Math.random() < 0.22) nextTarget += -10 + Math.random() * 20;
+
+      air.targetTemp = clamp(nextTarget, -65, 20);
+    }
+
+    air.segmentRemaining--;
+
+    const diff = air.targetTemp - air.currentTemp;
+    air.currentTemp += clamp(diff, -1.4, 1.4);
+
+    if (Math.random() < 0.18) {
+      air.currentTemp += Math.random() < 0.5 ? -0.5 : 0.5;
+    }
+
+    air.currentTemp = clamp(air.currentTemp, -65, 20);
+    return air.currentTemp;
+  }
+
+  function initAir() {
+    air.tempCols = [];
+    air.offsetPx = 0;
+    air.currentTemp = -35;
+    air.targetTemp = -35;
+    air.segmentRemaining = 0;
+
+    const count = Math.ceil(canvas.width / air.stepPx) + 30;
+    for (let i = 0; i < count; i++) {
+      air.tempCols.push(nextAirTemp());
+    }
+  }
+
+  function updateAir(dt) {
+    const pxPerSec = plane.forwardSpeed / 10;
+    air.offsetPx += pxPerSec * dt;
+
+    while (air.offsetPx >= air.stepPx) {
+      air.offsetPx -= air.stepPx;
+      air.tempCols.shift();
+      air.tempCols.push(nextAirTemp());
+    }
+  }
+
+  function getTempAtScreenX(screenX) {
+    const idxFloat = (screenX + air.offsetPx) / air.stepPx;
+    const i0 = Math.floor(idxFloat);
+    const i1 = Math.min(i0 + 1, air.tempCols.length - 1);
+    const t = idxFloat - i0;
+
+    const a = air.tempCols[clamp(i0, 0, air.tempCols.length - 1)];
+    const b = air.tempCols[clamp(i1, 0, air.tempCols.length - 1)];
+    return a + (b - a) * t;
+  }
+
+  function localTemperatureC() {
+    return getTempAtScreenX(planeScreenX());
+  }
+
+  function warmNormFromTemp(tempC) {
+    return clamp((tempC + 65) / 85, 0, 1);
+  }
+
+  function scaleHeightFeetFromTemp(tempC) {
+    return lerp(22000, 31000, warmNormFromTemp(tempC));
+  }
+
+  function pressureAtAltitudeMb(altFeet, tempC) {
+    const H = scaleHeightFeetFromTemp(tempC);
+    return SEA_LEVEL_PRESSURE_MB * Math.exp(-Math.max(0, altFeet) / H);
+  }
+
+  function altitudeForPressureMb(pressureMb, tempC) {
+    const H = scaleHeightFeetFromTemp(tempC);
+    return -H * Math.log(pressureMb / SEA_LEVEL_PRESSURE_MB);
+  }
+
+  function getSmoothedTempAtScreenX(screenX) {
+    const offsets = [-48, -32, -16, 0, 16, 32, 48];
+    let total = 0;
+    let weightTotal = 0;
+    for (const off of offsets) {
+      const weight = off === 0 ? 3 : (Math.abs(off) === 16 ? 2 : 1);
+      total += getTempAtScreenX(screenX + off) * weight;
+      weightTotal += weight;
+    }
+    return total / weightTotal;
+  }
+
+  function getWarmBoundaryFeetAtScreenX(screenX) {
+    const temp = getSmoothedTempAtScreenX(screenX);
+    return altitudeForPressureMb(JETSTREAM_PRESSURE_MB, temp);
+  }
+
+  function getWarmBoundaryScreenYAtScreenX(screenX) {
+    return screenYFromFeet(getWarmBoundaryFeetAtScreenX(screenX));
+  }
+
+  function getTropopauseBandCenterAtScreenX(screenX) {
+    return getWarmBoundaryFeetAtScreenX(screenX);
+  }
+
+  function getTropopauseBandCenterHere() {
+    return getTropopauseBandCenterAtScreenX(planeScreenX());
+  }
+
+  function getBarometerMb() {
+    return clamp(pressureAtAltitudeMb(plane.yFeetMSL, localTemperatureC()), 120, 1055);
+  }
+
+  function inJetstreamBand() {
+    return Math.abs(plane.yFeetMSL - getTropopauseBandCenterHere()) <= JET_BAND_HALF_THICKNESS;
+  }
+
+  function milesRemaining() {
+    return Math.max(0, Math.ceil((ROUTE_FEET - tripProgressFeet()) / FEET_PER_MILE));
+  }
+
+  function makeTree(x, idx) {
+    return {
+      x,
+      h: 14 + ((idx * 17) % 5) * 6,
+      crown: idx % 3,
+      lean: ((idx % 5) - 2) * 0.35
+    };
+  }
+
+  function makeCritter(x, idx) {
+    const kinds = ["bunny", "cat", "bird", "fox"];
+    return {
+      x,
+      kind: kinds[idx % kinds.length],
+      size: 6 + (idx % 3),
+      bob: (idx % 7) * 0.7
+    };
+  }
+
+  function spawnGroundCluster(xStart) {
+    const items = 4 + Math.floor(Math.random() * 8);
+    let x = xStart;
+    for (let i = 0; i < items; i++) {
+      const idx = world.clusterSeed++;
+      if (Math.random() < 0.68) {
+        world.trees.push(makeTree(x, idx));
+      } else {
+        world.critters.push(makeCritter(x + Math.floor(Math.random() * 10), idx));
+      }
+      x += 18 + Math.random() * 34;
+    }
+    world.nextClusterX = x + 120 + Math.random() * 320;
+  }
+
+  function initTrees() {
+    world.trees = [];
+    world.critters = [];
+    world.clusterSeed = 0;
+    world.nextClusterX = 20;
+    while (world.nextClusterX < canvas.width + 260) {
+      spawnGroundCluster(world.nextClusterX);
+    }
+  }
+
+  function spawnLowCloud(xStart = null) {
+    const x = xStart ?? (canvas.width + Math.random() * 120);
+    return {
+      x,
+      y: 0.72 + Math.random() * 0.12,
+      w: 24 + Math.floor(Math.random() * 34),
+      h: 8 + Math.floor(Math.random() * 10)
+    };
+  }
+
+  function initLowClouds() {
+    world.lowClouds = [];
+    const count = 20;
+    for (let i = 0; i < count; i++) {
+      world.lowClouds.push(spawnLowCloud(i * 70));
+    }
+  }
+
+  function updateTrees(dt) {
+    const pxPerSec = plane.forwardSpeed / 10;
+    for (const tree of world.trees) tree.x -= pxPerSec * dt;
+    for (const critter of world.critters) critter.x -= pxPerSec * dt;
+
+    world.nextClusterX -= pxPerSec * dt;
+    world.trees = world.trees.filter(tree => tree.x > -40);
+    world.critters = world.critters.filter(critter => critter.x > -50);
+
+    while (world.nextClusterX < canvas.width + 220) {
+      spawnGroundCluster(world.nextClusterX);
+    }
+  }
+
+  function updateLowClouds(dt) {
+    const temp = localTemperatureC();
+    const warmNorm = clamp((temp + 60) / 70, 0, 1);
+    const pxPerSec = plane.forwardSpeed / 10;
+
+    for (const c of world.lowClouds) c.x -= pxPerSec * dt;
+
+    while (world.lowClouds.length && world.lowClouds[0].x + world.lowClouds[0].w < -40) {
+      world.lowClouds.shift();
+    }
+
+    const desiredCount = 8 + Math.floor(warmNorm * 20);
+    while (world.lowClouds.length < desiredCount) {
+      world.lowClouds.push(spawnLowCloud());
+    }
+  }
+
+  function spawnSmokeCanister() {
+    const spawnX = plane.xFeet + canvas.width * SCREEN_FT_PER_PIXEL + 4000 + Math.random() * 14000;
+    const center = getTropopauseBandCenterAtScreenX(canvas.width + 40);
+    smoke.canisters.push({
+      worldX: spawnX,
+      yFeet: center + (Math.random() * 2 - 1) * (JET_BAND_HALF_THICKNESS * 0.7),
+      bob: Math.random() * Math.PI * 2
+    });
+  }
+
+  function updateSmokeCanisters(dt) {
+    if (gameState !== STATE_PLAYING) return;
+
+    smoke.spawnTimer -= dt;
+    if (smoke.spawnTimer <= 0) {
+      smoke.spawnTimer = 3.2 + Math.random() * 4.5;
+      if (Math.random() < 0.8) spawnSmokeCanister();
+    }
+
+    const pickupRadiusX = 34 * SCREEN_FT_PER_PIXEL;
+    const pickupRadiusY = 24 * SCREEN_FT_PER_PIXEL;
+
+    smoke.canisters = smoke.canisters.filter(c => {
+      if (c.worldX < plane.xFeet - 20000) return false;
+      const dx = Math.abs(c.worldX - plane.xFeet);
+      const dy = Math.abs(c.yFeet - plane.yFeetMSL);
+      if (dx < pickupRadiusX && dy < pickupRadiusY && smoke.inventory < 1) {
+        smoke.inventory++;
+        return false;
+      }
+      return true;
+    });
+  }
+
+  function updateSmokeTrail(dt) {
+    if (smoke.boostTimer > 0) {
+      smoke.boostTimer = Math.max(0, smoke.boostTimer - dt);
+      const sourceX = smokeSourceX();
+      const sourceY = smokeSourceY() + Math.sin(performance.now() / 220) * 1.5;
+      for (let i = 0; i < 3; i++) {
+        smoke.trail.push({
+          x: sourceX + Math.random() * 4 - 2,
+          y: sourceY + Math.random() * 4 - 2,
+          vx: -160 - Math.random() * 260,
+          vy: -20 + Math.random() * 40,
+          life: 0.65 + Math.random() * 0.45,
+          maxLife: 0.65 + Math.random() * 0.45
+        });
+      }
+    }
+
+    const nextTrail = [];
+    for (const p of smoke.trail) {
+      p.life -= dt;
+      if (p.life <= 0) continue;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 0.985;
+      p.vy *= 0.985;
+      nextTrail.push(p);
+    }
+    smoke.trail = nextTrail;
+  }
+
+  function drawSmokeCanisters() {
+    ctx.strokeStyle = "#FFF";
+    ctx.lineWidth = 2;
+
+    for (const c of smoke.canisters) {
+      const x = Math.floor(worldXToScreenX(c.worldX));
+      const y = Math.floor(screenYFromFeet(c.yFeet) + Math.sin(timeElapsed * 3 + c.bob) * 5);
+      if (x < -30 || x > canvas.width + 30) continue;
+
+      ctx.strokeRect(x - 8, y - 10, 16, 20);
+      ctx.beginPath();
+      ctx.moveTo(x - 5, y - 10);
+      ctx.lineTo(x - 2, y - 16);
+      ctx.lineTo(x + 1, y - 11);
+      ctx.moveTo(x + 1, y - 11);
+      ctx.lineTo(x + 4, y - 18);
+      ctx.lineTo(x + 7, y - 12);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y + 12);
+      ctx.lineTo(x + 10, y + 12);
+      ctx.stroke();
+    }
+  }
+
+  function drawSmokeTrail() {
+    ctx.strokeStyle = "#3fa";
+    ctx.fillStyle = "#2E9";
+    for (const p of smoke.trail) {
+      const size = Math.max(2, Math.floor(7 * (p.life / p.maxLife)));
+      ctx.strokeRect(Math.floor(p.x - size / 2), Math.floor(p.y - size / 2), size, size);
+      ctx.fill();
+    }
+  }
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initTrees();
+    initLowClouds();
+    initAir();
+    initStars();
+  }
+  window.addEventListener("resize", resize);
+
+  function resetGame() {
+    plane.xFeet = 0;
+    plane.yFeetMSL = 8000;
+    plane.vy = 0;
+    plane.forwardSpeed = plane.baseForwardSpeed;
+    score = 0;
+    timeElapsed = 0;
+    smoke.canisters = [];
+    smoke.trail = [];
+    smoke.spawnTimer = 2.5;
+    smoke.inventory = 0;
+    smoke.boostTimer = 0;
+    gameState = STATE_START;
+    lastTime = performance.now();
+    initTrees();
+    initLowClouds();
+    initAir();
+  }
+
+  function update(dt) {
+    if (gameState !== STATE_PLAYING) return;
+
+    timeElapsed += dt;
+    plane.xFeet += plane.forwardSpeed * dt;
+
+    if (!balloonBurst) {
+      if (keys["arrowup"] || keys["w"]) plane.vy += plane.climbAccel * dt;
+      if (keys["arrowdown"] || keys["s"]) plane.vy -= plane.climbAccel * dt;
+      if (keys[" "] && smoke.inventory <= 0 && smoke.boostTimer <= 0) plane.vy *= 0.82;
+    }
+
+    plane.vy *= Math.pow(plane.drag, dt * 60);
+    if (balloonBurst) {
+      plane.vy -= 24000 * dt;
+      plane.vy = clamp(plane.vy, -36000, 4000);
+    } else {
+      plane.vy = clamp(plane.vy, plane.maxDescent, plane.maxClimb);
+    }
+    plane.yFeetMSL += plane.vy * dt;
+
+    updateAir(dt);
+
+    if (!balloonBurst && plane.yFeetMSL >= BALLOON_BURST_FEET) {
+      burstBalloon();
+    }
+
+    const jet = !balloonBurst && inJetstreamBand();
+    const targetForwardSpeed = balloonBurst
+      ? 900
+      : (jet ? 7000 : plane.baseForwardSpeed) + (smoke.boostTimer > 0 ? 900 : 0);
+    plane.forwardSpeed = lerp(
+      plane.forwardSpeed,
+      targetForwardSpeed,
+      Math.min(1, dt * 3)
+    );
+
+    if (jet) score += dt * 18;
+
+    updateTrees(dt);
+    updateLowClouds(dt);
+    updateSmokeCanisters(dt);
+    updateSmokeTrail(dt);
+    updateBurstPieces(dt);
+
+    if (plane.yFeetMSL <= GROUND_FEET_MSL + 300) {
+      gameState = STATE_CRASHED;
+      return;
+    }
+
+    if (!balloonBurst && tripProgressFeet() >= ROUTE_FEET) {
+      gameState = STATE_FINISHED;
+    }
+  }
+
+  function updateBurstPieces(dt) {
+    if (!burstPieces.length) return;
+    burstTimer = Math.max(0, burstTimer - dt);
+    for (const piece of burstPieces) {
+      piece.x += piece.vx * dt;
+      piece.y += piece.vy * dt;
+      piece.vy += 160 * dt;
+      piece.life -= dt;
+    }
+    burstPieces = burstPieces.filter(piece => piece.life > 0);
+  }
+
+  function drawSky() {
+    for (let x = 0; x < canvas.width; x += air.stepPx) {
+      const boundaryY = getWarmBoundaryScreenYAtScreenX(x);
+      const hotStop = clamp(boundaryY / canvas.height, 0.04, 0.92);
+      const coldMid = clamp(hotStop * 0.5, 0, 0.56);
+      const warmBlendStop = clamp(hotStop + 0.06, 0, 0.97);
+
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, "rgb(0,18,135)");
+      grad.addColorStop(coldMid, "rgb(38,110,255)");
+      grad.addColorStop(hotStop, "rgb(170,170,255)");
+      grad.addColorStop(warmBlendStop, "rgb(255,110,84)");
+      grad.addColorStop(1, "rgb(255,12,12)");
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, 0, air.stepPx, canvas.height);
+    }
+
+    const fade = spaceFadeAlpha();
+    if (fade > 0) {
+      ctx.fillStyle = `rgba(0,0,0,${0.82 * fade})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = `rgba(255,255,255,${0.25 + 0.75 * fade})`;
+      for (const star of world.stars) {
+        const twinkle = 0.55 + 0.45 * Math.sin(timeElapsed * 2.3 + star.twinkle);
+        ctx.globalAlpha = fade * twinkle;
+        ctx.fillRect(Math.floor(star.x), Math.floor(star.y), star.size, star.size);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function drawJetstreamBand() {
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 8]);
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+
+    ctx.beginPath();
+    let startedTop = false;
+    for (let x = 0; x <= canvas.width; x += air.stepPx) {
+      const centerY = getWarmBoundaryScreenYAtScreenX(x);
+      const yTop = centerY - (JET_BAND_HALF_THICKNESS / SCREEN_FT_PER_PIXEL);
+      if (!startedTop) {
+        ctx.moveTo(x, yTop);
+        startedTop = true;
+      } else {
+        ctx.lineTo(x, yTop);
+      }
+    }
+    ctx.stroke();
+
+    ctx.beginPath();
+    let startedBottom = false;
+    for (let x = 0; x <= canvas.width; x += air.stepPx) {
+      const centerY = getWarmBoundaryScreenYAtScreenX(x);
+      const yBottom = centerY + (JET_BAND_HALF_THICKNESS / SCREEN_FT_PER_PIXEL);
+      if (!startedBottom) {
+        ctx.moveTo(x, yBottom);
+        startedBottom = true;
+      } else {
+        ctx.lineTo(x, yBottom);
+      }
+    }
+    ctx.stroke();
+
+    ctx.setLineDash([]);
+    ctx.strokeStyle = "#fff";
+    for (let x = 0; x < canvas.width; x += 28) {
+      const y = Math.floor(getWarmBoundaryScreenYAtScreenX(x));
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + 14, y);
+      ctx.lineTo(x + 9, y - 3);
+      ctx.moveTo(x + 14, y);
+      ctx.lineTo(x + 9, y + 3);
+      ctx.stroke();
+    }
+  }
+
+  function drawHorizonAndGround() {
+    const groundY = screenYFromFeet(GROUND_FEET_MSL);
+
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0, Math.floor(groundY), canvas.width, canvas.height - groundY);
+
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, Math.floor(groundY));
+    ctx.lineTo(canvas.width, Math.floor(groundY));
+    ctx.stroke();
+  }
+
+  function drawLowClouds() {
+    const groundY = screenYFromFeet(GROUND_FEET_MSL);
+    ctx.strokeStyle = "#fff";
+
+    for (const c of world.lowClouds) {
+      const y = Math.floor(c.y * groundY);
+      const x = Math.floor(c.x);
+      const w = c.w;
+      const h = c.h;
+      if (y > groundY - 8) continue;
+
+      ctx.strokeRect(x, y, w, h);
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y + Math.floor(h / 2));
+      ctx.lineTo(x, y + Math.floor(h / 2));
+      ctx.stroke();
+    }
+  }
+
+  function drawCritters() {
+    const groundY = screenYFromFeet(GROUND_FEET_MSL);
+    ctx.strokeStyle = "#fff";
+
+    for (const critter of world.critters) {
+      const x = Math.floor(critter.x);
+      const y = Math.floor(groundY - 4 - Math.sin((plane.xFeet / 400) + critter.bob) * 2);
+      const s = critter.size;
+
+      if (critter.kind === "bunny") {
+        ctx.strokeRect(x, y - s, s + 2, s);
+        ctx.beginPath();
+        ctx.moveTo(x + 2, y - s); ctx.lineTo(x + 2, y - s - 5);
+        ctx.moveTo(x + 5, y - s); ctx.lineTo(x + 5, y - s - 6);
+        ctx.stroke();
+      } else if (critter.kind === "cat") {
+        ctx.strokeRect(x, y - s, s + 3, s);
+        ctx.beginPath();
+        ctx.moveTo(x + 1, y - s); ctx.lineTo(x + 3, y - s - 3);
+        ctx.lineTo(x + 5, y - s);
+        ctx.moveTo(x + s + 3, y - 2); ctx.lineTo(x + s + 7, y - 5);
+        ctx.stroke();
+      } else if (critter.kind === "bird") {
+        ctx.beginPath();
+        ctx.moveTo(x, y - 3); ctx.lineTo(x + 4, y - 7); ctx.lineTo(x + 8, y - 3);
+        ctx.moveTo(x + 8, y - 3); ctx.lineTo(x + 12, y - 7); ctx.lineTo(x + 16, y - 3);
+        ctx.stroke();
+      } else if (critter.kind === "fox") {
+        ctx.strokeRect(x, y - s, s + 4, s - 1);
+        ctx.beginPath();
+        ctx.moveTo(x + s + 4, y - 2); ctx.lineTo(x + s + 9, y - 5); ctx.lineTo(x + s + 6, y - 1);
+        ctx.moveTo(x + 2, y - s); ctx.lineTo(x + 4, y - s - 3);
+        ctx.moveTo(x + 5, y - s); ctx.lineTo(x + 7, y - s - 3);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawTrees() {
+    const groundY = screenYFromFeet(GROUND_FEET_MSL);
+    ctx.strokeStyle = "#fff";
+
+    for (const tree of world.trees) {
+      const x = Math.floor(tree.x);
+      const trunkTop = Math.floor(groundY - tree.h);
+      const trunkBottom = Math.floor(groundY);
+
+      ctx.beginPath();
+      ctx.moveTo(x, trunkTop + 4);
+      ctx.lineTo(x + tree.lean, trunkBottom);
+      ctx.stroke();
+
+      if (tree.crown === 0) {
+        ctx.beginPath();
+        ctx.moveTo(x, trunkTop);
+        ctx.lineTo(x - 5, trunkTop + 8);
+        ctx.lineTo(x + 5, trunkTop + 8);
+        ctx.closePath();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x, trunkTop + 6);
+        ctx.lineTo(x - 4, trunkTop + 13);
+        ctx.lineTo(x + 4, trunkTop + 13);
+        ctx.closePath();
+        ctx.stroke();
+      } else if (tree.crown === 1) {
+        ctx.strokeRect(x - 4, trunkTop + 2, 8, 8);
+        ctx.strokeRect(x - 6, trunkTop + 7, 12, 8);
+      } else {
+        ctx.beginPath();
+        ctx.arc(x, trunkTop + 6, 5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x - 4, trunkTop + 11, 4, 0, Math.PI * 2);
+        ctx.arc(x + 4, trunkTop + 11, 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawCitySprite(worldFeet, label, style = "city") {
+    const x = Math.floor(planeScreenX() + (worldFeet - tripProgressFeet()) / SCREEN_FT_PER_PIXEL);
+    const groundY = Math.floor(screenYFromFeet(GROUND_FEET_MSL));
+    if (x < -160 || x > canvas.width + 160) return;
+
+    ctx.strokeStyle = "#fff";
+    ctx.fillStyle = "#000";
+
+    const buildings = style === "city"
+      ? [
+          { dx: -54, w: 16, h: 34 },
+          { dx: -34, w: 20, h: 52 },
+          { dx: -10, w: 18, h: 40 },
+          { dx: 12, w: 24, h: 64 },
+          { dx: 40, w: 16, h: 44 }
+        ]
+      : [
+          { dx: -52, w: 22, h: 42 },
+          { dx: -26, w: 18, h: 56 },
+          { dx: -4, w: 26, h: 72 },
+          { dx: 26, w: 18, h: 50 },
+          { dx: 48, w: 14, h: 38 }
+        ];
+
+    for (const b of buildings) {
+      ctx.strokeRect(x + b.dx, groundY - b.h, b.w, b.h);
+      const cols = Math.max(1, Math.floor(b.w / 6));
+      const rows = Math.max(1, Math.floor((b.h - 8) / 9));
+      for (let cy = 0; cy < rows; cy++) {
+        for (let cx = 0; cx < cols; cx++) {
+          ctx.fillRect(x + b.dx + 3 + cx * 6, groundY - b.h + 4 + cy * 8, 2, 2);
+        }
+      }
+    }
+
+    if (style === "nyc") {
+      ctx.beginPath();
+      ctx.moveTo(x + 9, groundY - 72);
+      ctx.lineTo(x + 17, groundY - 96);
+      ctx.lineTo(x + 25, groundY - 72);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(x - 30, groundY - 52);
+      ctx.lineTo(x - 18, groundY - 74);
+      ctx.lineTo(x - 6, groundY - 52);
+      ctx.stroke();
+    }
+
+    ctx.font = "bold 18px monospace";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(label, x - Math.floor(ctx.measureText(label).width / 2), groundY - 110);
+  }
+
+  function drawSun() {
+    const x = canvas.width - 110;
+    const y = 92;
+    const r = 34;
+    const winkPhase = (timeElapsed * 0.55) % 8;
+    const isWinking = winkPhase > 6.85 && winkPhase < 7.45;
+
+    ctx.save();
+    ctx.globalAlpha = 1 - spaceFadeAlpha() * 0.7;
+    ctx.translate(x, y);
+    ctx.rotate(sunAngle);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 12; i++) {
+      const a = (Math.PI * 2 * i) / 12;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * (r + 8), Math.sin(a) * (r + 8));
+      ctx.lineTo(Math.cos(a) * (r + 22), Math.sin(a) * (r + 22));
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(x - 12, y - 8, 4, 4);
+    if (isWinking) {
+      ctx.beginPath();
+      ctx.moveTo(x + 8, y - 6);
+      ctx.lineTo(x + 14, y - 10);
+      ctx.lineTo(x + 20, y - 6);
+      ctx.stroke();
+    } else {
+      ctx.fillRect(x + 8, y - 8, 4, 4);
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y + 2, 14, 0.18 * Math.PI, 0.82 * Math.PI, false);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPlane() {
+    const px = planeScreenX();
+    const py = planeScreenY();
+    const bob = balloonBobOffset();
+    const balloonTopY = py - 30 + bob;
+    const basketY = py + bob;
+    const barometerMb = getBarometerMb().toFixed(1);
+
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+
+    if (!balloonBurst) {
+      ctx.beginPath();
+      ctx.ellipse(px + 18, balloonTopY, 10, 10, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = "#22F";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(px + 9, balloonTopY + 4);
+      ctx.lineTo(px + 12, basketY - 10);
+      ctx.moveTo(px + 27, balloonTopY + 4);
+      ctx.lineTo(px + 24, basketY - 10);
+      ctx.stroke();
+    }
+
+    ctx.strokeRect(px + 12, basketY - 10, 12, 5);
+
+    if (!balloonBurst) {
+      if (plane.vy > 120) {
+        ctx.beginPath();
+        ctx.moveTo(px + 18, basketY - 5);
+        ctx.lineTo(px + 18, basketY + 5);
+        ctx.stroke();
+      } else if (plane.vy < -120) {
+        ctx.beginPath();
+        ctx.moveTo(px + 18, basketY - 5);
+        ctx.lineTo(px + 12, basketY + 3);
+        ctx.moveTo(px + 18, basketY - 5);
+        ctx.lineTo(px + 24, basketY + 3);
+        ctx.stroke();
+      }
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(px + 18, basketY - 5);
+      ctx.lineTo(px + 12, basketY + 4);
+      ctx.moveTo(px + 18, basketY - 5);
+      ctx.lineTo(px + 24, basketY + 4);
+      ctx.stroke();
+    }
+
+    if (burstPieces.length) {
+      ctx.fillStyle = "#fff";
+      for (const piece of burstPieces) {
+        const alpha = Math.max(0, piece.life / piece.maxLife);
+        ctx.globalAlpha = alpha;
+        ctx.fillRect(Math.floor(piece.x), Math.floor(piece.y), 3, 3);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.font = "bold 18px monospace";
+    ctx.fillStyle = "#fff";
+    const label = balloonBurst ? "Balloon Burst!" : `Barometer ${barometerMb} mb`;
+    ctx.fillText(label, px - Math.floor(ctx.measureText(label).width / 2) + 18, balloonTopY - 46);
+  }
+
+  function updateTopLeftHud() {
+    if (gameState === STATE_START) {
+      hudTopLeft.textContent = "";
+      return;
+    }
+
+    const trueAlt = Math.round(plane.yFeetMSL);
+    hudTopLeft.textContent = `Altitude ${trueAlt} ft`;
+  }
+
+  function drawWarnings() {
+    if (gameState !== STATE_PLAYING) return;
+
+    if (plane.yFeetMSL < 5000) {
+      const invert = Math.floor(performance.now() / 180) % 2 === 0;
+      ctx.fillStyle = invert ? "#fff" : "#000";
+      ctx.fillRect(canvas.width / 2 - 90, 24, 180, 34);
+      ctx.strokeStyle = "#fff";
+      ctx.strokeRect(canvas.width / 2 - 90, 24, 180, 34);
+      ctx.fillStyle = invert ? "#000" : "#fff";
+      ctx.font = "bold 24px monospace";
+      ctx.fillText("LOW ALT", canvas.width / 2 - 58, 47);
+    }
+
+    if (!balloonBurst && plane.yFeetMSL > SPACE_FADE_START_FEET) {
+      ctx.strokeStyle = "#fff";
+      ctx.strokeRect(canvas.width / 2 - 118, 108, 236, 32);
+      ctx.font = "bold 20px monospace";
+      ctx.fillStyle = "#fff";
+      ctx.fillText("NEAR SPACE", canvas.width / 2 - 58, 130);
+    }
+
+    if (inJetstreamBand()) {
+      ctx.strokeStyle = "#fff";
+      ctx.strokeRect(canvas.width / 2 - 100, 68, 200, 32);
+      ctx.font = "bold 20px monospace";
+      ctx.fillStyle = "#fff";
+      ctx.fillText("JETSTREAM", canvas.width / 2 - 58, 90);
+    }
+  }
+
+  function updateBottomHud() {
+    const elapsed = formatTime(timeElapsed);
+    const remaining = milesRemaining();
+
+    if (gameState === STATE_START) {
+      hudBottom.textContent = `Flight Time: ${elapsed}    Distance Remaining: ${ROUTE_MILES} mi    Smoke: None`;
+      return;
+    }
+
+    if (gameState === STATE_FINISHED) {
+      hudBottom.textContent = `Flight Time: ${elapsed}    Distance Remaining: 0 mi    Smoke: ${smoke.inventory > 0 ? "Ready" : "None"}`;
+      return;
+    }
+
+    const smokeStatus = smoke.boostTimer > 0 ? "Boosting" : (smoke.inventory > 0 ? "Ready" : "None");
+    hudBottom.textContent = `Flight Time: ${elapsed}    Distance Remaining: ${remaining} mi    Smoke: ${smokeStatus}`;
+  }
+
+  function drawCenteredPanel(lines, footer = "") {
+    const w = Math.min(760, canvas.width - 60);
+    const h = Math.min(360, canvas.height - 80);
+    const x = Math.floor((canvas.width - w) / 2);
+    const y = Math.floor((canvas.height - h) / 2);
+
+    ctx.fillStyle = "#000";
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    for (const line of lines) {
+      ctx.font = line.font;
+      ctx.fillText(line.text, canvas.width / 2, y + line.y);
+    }
+    if (footer) {
+      ctx.font = "18px monospace";
+      ctx.fillText(footer, canvas.width / 2, y + h - 28);
+    }
+    ctx.textAlign = "left";
+  }
+
+  function drawStartScreen() {
+    if (gameState !== STATE_START) return;
+
+    drawCitySprite(START_CITY_X, "SEATTLE", "city");
+    drawCitySprite(FINISH_CITY_X, "NYC", "nyc");
+
+    drawCenteredPanel([
+      { text: "START GAME", font: "bold 34px monospace", y: 56 },
+      { text: "Fly from Seattle to New York City", font: "22px monospace", y: 112 },
+      { text: "Try and Get the Shortest Time!", font: "22px monospace", y: 148 },
+      { text: "Pay attention to the height of the Jet Stream and the Air Pressure", font: "20px monospace", y: 192 },
+      { text: "Your speed will increase in the Jet Stream!", font: "20px monospace", y: 228 }
+    ], "Press Space, Enter, or Click to Start");
+  }
+
+  function drawCrashMessage() {
+    if (gameState !== STATE_CRASHED) return;
+
+    drawCenteredPanel([
+      { text: balloonBurst ? "BALLOON LOST" : "FLIGHT ENDED", font: "bold 28px monospace", y: 74 },
+      { text: `Flight Time: ${formatTime(timeElapsed)}`, font: "22px monospace", y: 132 },
+      { text: `Distance Remaining: ${milesRemaining()} mi`, font: "22px monospace", y: 170 },
+      { text: `Time in the Jet Stream: ${Math.floor(score)} s`, font: "20px monospace", y: 214 }
+    ], "Press R to restart");
+  }
+
+  function drawFinishMessage() {
+    if (gameState !== STATE_FINISHED) return;
+
+    drawCenteredPanel([
+      { text: "ARRIVED IN NEW YORK CITY", font: "bold 28px monospace", y: 74 },
+      { text: `Final Flight Time: ${formatTime(timeElapsed)}`, font: "22px monospace", y: 132 },
+      { text: `Route Distance: ${ROUTE_MILES} mi`, font: "22px monospace", y: 170 },
+      { text: `Time in the Jet Stream: ${Math.floor(score)} s`, font: "20px monospace", y: 214 }
+    ], "Press R to fly again");
+  }
+
+  function loop(now) {
+    const dt = Math.min(0.033, (now - lastTime) / 1000);
+    lastTime = now;
+
+    update(dt);
+    sunAngle += dt * 0.9;
+
+    drawSky();
+    drawSun();
+    drawJetstreamBand();
+    drawSmokeCanisters();
+    drawHorizonAndGround();
+    drawLowClouds();
+    drawTrees();
+    drawCritters();
+    drawCitySprite(START_CITY_X, "SEATTLE", "city");
+    drawCitySprite(FINISH_CITY_X, "NYC", "nyc");
+    drawSmokeTrail();
+    drawPlane();
+    updateTopLeftHud();
+    drawWarnings();
+    updateBottomHud();
+    drawStartScreen();
+    drawCrashMessage();
+    drawFinishMessage();
+
+    requestAnimationFrame(loop);
+  }
+
+  resize();
+  syncHelp();
+  resetGame();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
