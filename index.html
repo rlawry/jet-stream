@@ -106,6 +106,84 @@
     #audioControls button:hover {
       background: #111;
     }
+
+    #mobileControls {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    #mobileControls[hidden] {
+      display: none;
+    }
+
+    .mobileCluster {
+      position: fixed;
+      bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    #mobileLeftControls {
+      left: 12px;
+    }
+
+    #mobileRightControls {
+      right: 12px;
+    }
+
+    #mobileBeginWrap {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .mobileControlButton {
+      width: 72px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.5);
+      color: rgba(255, 255, 255, 0.5);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      padding: 0;
+      font: bold 18px "Courier New", monospace;
+      cursor: pointer;
+      pointer-events: auto;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .mobileControlButton svg {
+      width: 36px;
+      height: 36px;
+      display: block;
+    }
+
+    .mobileControlButton span {
+      opacity: 1;
+    }
+
+    .mobileControlButton[hidden] {
+      display: none;
+    }
+
+    .mobileControlButton:active {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    #mobileBeginButton {
+      width: 128px;
+      font-size: 26px;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 
@@ -130,6 +208,40 @@
     <button id="musicToggle" type="button">Music: On</button>
     <button id="soundToggle" type="button">Sounds: On</button>
   </div>
+  <div id="mobileControls" hidden>
+    <div id="mobileLeftControls" class="mobileCluster">
+      <button id="mobileUpButton" class="mobileControlButton" type="button" aria-label="Climb">
+        <svg viewBox="0 0 36 36" aria-hidden="true">
+          <path d="M18 7 L29 18 H22 V29 H14 V18 H7 Z" fill="currentColor"></path>
+        </svg>
+      </button>
+      <button id="mobileDownButton" class="mobileControlButton" type="button" aria-label="Descend">
+        <svg viewBox="0 0 36 36" aria-hidden="true">
+          <path d="M14 7 H22 V18 H29 L18 29 L7 18 H14 Z" fill="currentColor"></path>
+        </svg>
+      </button>
+    </div>
+    <div id="mobileRightControls" class="mobileCluster">
+      <button id="mobileGrappleButton" class="mobileControlButton" type="button" aria-label="Drop grapple">
+        <svg viewBox="0 0 36 36" aria-hidden="true">
+          <line x1="18" y1="6" x2="18" y2="23" stroke="currentColor" stroke-width="3"></line>
+          <rect x="13" y="23" width="10" height="10" fill="currentColor"></rect>
+        </svg>
+      </button>
+      <button id="mobileBoosterButton" class="mobileControlButton" type="button" aria-label="Use booster pack">
+        <svg viewBox="0 0 18 22" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square">
+            <rect x="4" y="6" width="10" height="14"></rect>
+            <path d="M7 6 L9 1 L11 5"></path>
+            <path d="M14 12 L17 12"></path>
+          </g>
+        </svg>
+      </button>
+    </div>
+    <div id="mobileBeginWrap">
+      <button id="mobileBeginButton" class="mobileControlButton" type="button">Begin!</button>
+    </div>
+  </div>
 
   <script>
     (() => {
@@ -141,6 +253,12 @@
       const helpHint = document.getElementById("helpHint");
       const musicToggle = document.getElementById("musicToggle");
       const soundToggle = document.getElementById("soundToggle");
+      const mobileControls = document.getElementById("mobileControls");
+      const mobileUpButton = document.getElementById("mobileUpButton");
+      const mobileDownButton = document.getElementById("mobileDownButton");
+      const mobileGrappleButton = document.getElementById("mobileGrappleButton");
+      const mobileBoosterButton = document.getElementById("mobileBoosterButton");
+      const mobileBeginButton = document.getElementById("mobileBeginButton");
 
       const LEADERBOARD_KEY = "jetstreamDensityFlightLeaderboard";
       const LEADERBOARD_SIZE = 8;
@@ -190,6 +308,62 @@
       let helpVisible = false;
       let showIsolines = true;
 
+      let isMobileUI = false;
+
+      function detectMobileUI() {
+        return window.matchMedia("(pointer: coarse)").matches || window.innerWidth <= 900;
+      }
+
+      function updateMobileControlsVisibility() {
+        isMobileUI = detectMobileUI();
+        mobileControls.hidden = !isMobileUI;
+        mobileBeginButton.hidden = !isMobileUI || gameState !== STATE_START;
+        const showActionButtons = isMobileUI && gameState === STATE_PLAYING;
+        mobileUpButton.hidden = !showActionButtons;
+        mobileDownButton.hidden = !showActionButtons;
+        mobileGrappleButton.hidden = !showActionButtons;
+        mobileBoosterButton.hidden = !showActionButtons;
+      }
+
+      function bindHoldButton(button, keyNames) {
+        const setState = pressed => {
+          for (const keyName of keyNames) keys[keyName] = pressed;
+        };
+        const press = e => {
+          e.preventDefault();
+          setState(true);
+        };
+        const release = e => {
+          e.preventDefault();
+          setState(false);
+        };
+        button.addEventListener("pointerdown", press);
+        button.addEventListener("pointerup", release);
+        button.addEventListener("pointercancel", release);
+        button.addEventListener("pointerleave", release);
+        button.addEventListener("lostpointercapture", release);
+      }
+
+      function bindTapButton(button, handler) {
+        button.addEventListener("pointerdown", e => {
+          e.preventDefault();
+          handler();
+        });
+      }
+
+      function initMobileControls() {
+        bindHoldButton(mobileUpButton, ["arrowup", "w"]);
+        bindHoldButton(mobileDownButton, ["arrowdown", "s"]);
+        bindTapButton(mobileBeginButton, startRun);
+        bindTapButton(mobileGrappleButton, () => {
+          if (gameState === STATE_PLAYING) tryStartGrapple();
+        });
+        bindTapButton(mobileBoosterButton, () => {
+          if (gameState === STATE_PLAYING) releaseSmokeBoost();
+        });
+        updateMobileControlsVisibility();
+      }
+
       function syncHelp() {
         help.hidden = !helpVisible;
         helpHint.hidden = helpVisible;
@@ -214,6 +388,7 @@
           primeAudioClips();
           gameState = STATE_PLAYING;
           lastTime = performance.now();
+          updateMobileControlsVisibility();
         }
       }
 
@@ -395,7 +570,8 @@
         keys[e.key.toLowerCase()] = false;
       });
 
-      window.addEventListener("mousedown", () => {
+      window.addEventListener("mousedown", e => {
+        if (isMobileUI && e.target && e.target.closest && e.target.closest("#mobileControls")) return;
         if (gameState === STATE_START) startRun();
       });
 
@@ -1827,6 +2003,7 @@
         initBoosterTowers();
         initAir();
         initStars();
+        updateMobileControlsVisibility();
       }
       window.addEventListener("resize", resize);
 
@@ -1868,6 +2045,7 @@
         stopAllAudio();
         gameState = STATE_START;
         lastTime = performance.now();
+        updateMobileControlsVisibility();
         initTrees();
         initLowClouds();
         initBoosterTowers();
@@ -1933,12 +2111,14 @@
         if (plane.yFeetMSL <= GROUND_FEET_MSL + 300) {
           stopAllAudio();
           gameState = STATE_CRASHED;
+          updateMobileControlsVisibility();
           return;
         }
 
         if (!balloonBurst && tripProgressFeet() >= ROUTE_FEET) {
           triggerVictoryAudio();
           gameState = STATE_FINISHED;
+          updateMobileControlsVisibility();
           startFinishNameEntry();
         }
       }
@@ -2884,6 +3064,7 @@ Pressure ${balloonPressureMb} mb`;
         requestAnimationFrame(loop);
       }
 
+      initMobileControls();
       resize();
       syncHelp();
       syncAudioMuteStates();
