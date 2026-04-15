@@ -1,2584 +1,2892 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Jetstream Density Flight</title>
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #000;
-    color: #fff;
-    font-family: "Courier New", monospace;
-    overflow: hidden;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jetstream Density Flight</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #fff;
+      font-family: "Courier New", monospace;
+      overflow: hidden;
+    }
 
-  canvas {
-    display: block;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    background: #000;
-  }
+    canvas {
+      display: block;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      background: #000;
+    }
 
-  #hudTopLeft {
-    position: fixed;
-    left: 12px;
-    top: 12px;
-    background: #000;
-    border: 2px solid #fff;
-    padding: 10px 14px;
-    line-height: 1.3;
-    font-size: 24px;
-    white-space: pre-line;
-    pointer-events: none;
-    z-index: 10;
-    color: #fff;
-    text-align: left;
-    min-width: 300px;
-  }
+    #hudTopLeft {
+      position: fixed;
+      left: 12px;
+      top: 12px;
+      background: #000;
+      border: 2px solid #fff;
+      padding: 10px 14px;
+      line-height: 1.5;
+      font-size: 24px;
+      white-space: pre-line;
+      pointer-events: none;
+      z-index: 10;
+      color: #fff;
+      text-align: left;
+      min-width: 300px;
+    }
 
-  #hudBottom {
-    position: fixed;
-    left: 50%;
-    bottom: 12px;
-    transform: translateX(-50%);
-    background: #000;
-    border: 2px solid #fff;
-    padding: 8px 14px;
-    line-height: 1.3;
-    font-size: 18px;
-    white-space: pre-line;
-    pointer-events: none;
-    z-index: 10;
-    color: #fff;
-    text-align: center;
-    min-width: 420px;
-  }
+    #hudBottom {
+      position: fixed;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      background: #000;
+      border: 2px solid #fff;
+      padding: 8px 14px;
+      line-height: 1.3;
+      font-size: 18px;
+      white-space: pre-line;
+      pointer-events: none;
+      z-index: 10;
+      color: #fff;
+      text-align: center;
+      min-width: 420px;
+    }
 
-  #helpHint,
-  #help {
-    position: fixed;
-    right: 10px;
-    top: 10px;
-    background: #000;
-    border: 2px solid #fff;
-    padding: 10px 12px;
-    line-height: 1.35;
-    font-size: 14px;
-    max-width: 390px;
-    pointer-events: none;
-    z-index: 10;
-    color: #fff;
-  }
+    #hudBottom svg {
+      position: relative;
+      top: 2px;
+    }
 
-  #helpHint[hidden],
-  #help[hidden] {
-    display: none;
-  }
+    #helpHint,
+    #help {
+      position: fixed;
+      right: 10px;
+      top: 10px;
+      background: #000;
+      border: 2px solid #fff;
+      padding: 10px 12px;
+      line-height: 1.35;
+      font-size: 14px;
+      max-width: 390px;
+      pointer-events: none;
+      z-index: 10;
+      color: #fff;
+    }
 
-  #audioControls {
-    position: fixed;
-    left: 12px;
-    bottom: 76px;
-    display: flex;
-    gap: 8px;
-    z-index: 20;
-    pointer-events: auto;
-  }
+    #helpHint[hidden],
+    #help[hidden] {
+      display: none;
+    }
 
-  #audioControls button {
-    background: #000;
-    color: #fff;
-    border: 2px solid #fff;
-    padding: 8px 12px;
-    font: 16px "Courier New", monospace;
-    cursor: pointer;
-  }
+    #audioControls {
+      position: fixed;
+      left: 12px;
+      bottom: 76px;
+      display: flex;
+      gap: 8px;
+      z-index: 20;
+      pointer-events: auto;
+    }
 
-  #audioControls button:hover {
-    background: #111;
-  }
-</style>
+    #audioControls button {
+      background: #000;
+      color: #fff;
+      border: 2px solid #fff;
+      padding: 8px 12px;
+      font: 16px "Courier New", monospace;
+      cursor: pointer;
+    }
+
+    #audioControls button:hover {
+      background: #111;
+    }
+  </style>
 </head>
+
 <body>
-<canvas id="game"></canvas>
-<div id="hudTopLeft"></div>
-<div id="hudBottom"></div>
-<div id="helpHint">Press H for Instructions</div>
-<div id="help" hidden>
-  <strong>JETSTREAM FINDER</strong><br>
-  Up / W: climb<br>
-  Down / S: descend<br>
-  Space: extend/retract grappling hook<br>B: use Booster Pack<br><br>
-  Warm air raises the jetstream band.<br>
-  Cold air lowers it.<br>
-  Speed increases in the jetstream.<br>
-  Press R to restart.<br>
-  Press L for Pressure Isolines<br><br>
-  <strong>Press H to Hide Instructions</strong>
-</div>
-<div id="audioControls">
-  <button id="musicToggle" type="button">Music: On</button>
-  <button id="soundToggle" type="button">Sounds: On</button>
-</div>
+  <canvas id="game"></canvas>
+  <div id="hudTopLeft"></div>
+  <div id="hudBottom"></div>
+  <div id="helpHint">Press H for Instructions</div>
+  <div id="help" hidden>
+    <strong>JETSTREAM Instructions</strong><br>
+    Up / W: climb<br>
+    Down / S: descend<br>
+    Space: extend/retract grappling hook<br>B: use Booster Pack<br><br>
+    Warm air raises the jetstream band.<br>
+    Cold air lowers it.<br>
+    Speed increases in the jetstream.<br>
+    Press R to restart.<br>
+    Press L for Pressure Isolines<br><br>
+    <strong>Press H to Hide Instructions</strong>
+  </div>
+  <div id="audioControls">
+    <button id="musicToggle" type="button">Music: On</button>
+    <button id="soundToggle" type="button">Sounds: On</button>
+  </div>
 
-<script>
-(() => {
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
-  const hudTopLeft = document.getElementById("hudTopLeft");
-  const hudBottom = document.getElementById("hudBottom");
-  const help = document.getElementById("help");
-  const helpHint = document.getElementById("helpHint");
-  const musicToggle = document.getElementById("musicToggle");
-  const soundToggle = document.getElementById("soundToggle");
+  <script>
+    (() => {
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d");
+      const hudTopLeft = document.getElementById("hudTopLeft");
+      const hudBottom = document.getElementById("hudBottom");
+      const help = document.getElementById("help");
+      const helpHint = document.getElementById("helpHint");
+      const musicToggle = document.getElementById("musicToggle");
+      const soundToggle = document.getElementById("soundToggle");
 
-  function clamp(v, lo, hi) {
-    return Math.max(lo, Math.min(hi, v));
-  }
+      const LEADERBOARD_KEY = "jetstreamDensityFlightLeaderboard";
+      const LEADERBOARD_SIZE = 8;
 
-  function lerp(a, b, t) {
-    return a + (b - a) * t;
-  }
+      const DEFAULT_LEADERBOARD = [
+        { name: "SKYBYTE", time: 120 },
+        { name: "RADR8R", time: 124 },
+        { name: "TURBOKID", time: 127 },
+        { name: "PIXLJAM", time: 131 },
+        { name: "AEROMAX", time: 135 },
+        { name: "CRTACE", time: 139 },
+        { name: "VHSNOVA", time: 145 },
+        { name: "GL1TCHR", time: 150 }
+      ];
 
-  function smoothstep(edge0, edge1, x) {
-    const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
-    return t * t * (3 - 2 * t);
-  }
+      let leaderboard = loadLeaderboard();
+      let finishNameEntryActive = false;
+      let finishNameBuffer = "";
+      let finishCursorTimer = 0;
+      let finishInsertedScore = false;
+      let finishRunQualified = false;
+      let finishRunTimeSeconds = 0;
+      let finishRunRank = null;
+      let finishRunWasFastest = false;
 
-  function formatTime(seconds) {
-    const whole = Math.max(0, Math.floor(seconds));
-    const mins = Math.floor(whole / 60);
-    const secs = whole % 60;
-    return `${mins}:${String(secs).padStart(2, "0")}`;
-  }
-
-  const keys = {};
-  let helpVisible = false;
-  let showIsolines = false;
-
-  function syncHelp() {
-    help.hidden = !helpVisible;
-    helpHint.hidden = helpVisible;
-  }
-
-  const STATE_START = "start";
-  const STATE_PLAYING = "playing";
-  const STATE_CRASHED = "crashed";
-  const STATE_FINISHED = "finished";
-  let gameState = STATE_START;
-
-  const ROUTE_MILES = 2401;
-  const FEET_PER_MILE = 5280;
-  const ROUTE_FEET = ROUTE_MILES * FEET_PER_MILE;
-  const TRIP_PROGRESS_SCALE = 17;
-  const CITY_GROUND_PADDING_FEET = 2600;
-  const START_CITY_X = 5000;
-  const FINISH_CITY_X = ROUTE_FEET + 12000;
-
-  function startRun() {
-    if (gameState === STATE_START) {
-      primeAudioClips();
-      gameState = STATE_PLAYING;
-      lastTime = performance.now();
-    }
-  }
-
-  function balloonBobOffset() {
-    return balloonBurst ? 0 : Math.sin(timeElapsed * 2.2) * 2;
-  }
-
-  function smokeSourceX() {
-    return planeScreenX() + 18;
-  }
-
-  function smokeSourceY() {
-    const basketY = planeScreenY() + balloonBobOffset();
-    return basketY - 2;
-  }
-
-  function balloonEnvelopeScale() {
-    if (balloonBurst) return 1;
-    return lerp(1, 1.55, clamp(plane.yFeetMSL / BALLOON_BURST_FEET, 0, 1));
-  }
-
-  function getBalloonBoundsFeet() {
-    const bob = balloonBobOffset();
-    const scale = balloonEnvelopeScale();
-    const balloonRadiusX = 10 * scale;
-    const balloonRadiusY = 10 * scale;
-    const balloonCenterX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
-    const balloonCenterFeet = plane.yFeetMSL + (30 - bob) * SCREEN_FT_PER_PIXEL;
-    const basketLeftX = plane.xFeet + 12 * SCREEN_FT_PER_PIXEL;
-    const basketRightX = plane.xFeet + 24 * SCREEN_FT_PER_PIXEL;
-    const basketTopFeet = plane.yFeetMSL + (10 - bob) * SCREEN_FT_PER_PIXEL;
-    const basketBottomFeet = plane.yFeetMSL + (-5 - bob) * SCREEN_FT_PER_PIXEL;
-
-    return {
-      leftX: Math.min(balloonCenterX - balloonRadiusX * SCREEN_FT_PER_PIXEL, basketLeftX),
-      rightX: Math.max(balloonCenterX + balloonRadiusX * SCREEN_FT_PER_PIXEL, basketRightX),
-      topFeet: Math.max(balloonCenterFeet + balloonRadiusY * SCREEN_FT_PER_PIXEL, basketTopFeet),
-      bottomFeet: Math.min(balloonCenterFeet - balloonRadiusY * SCREEN_FT_PER_PIXEL, basketBottomFeet)
-    };
-  }
-
-  function getNearestBoosterTowerForGrapple() {
-    if (!world.boosterTowers.length) return null;
-    const hookX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
-    const basketFeet = plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL;
-    let best = null;
-    let bestScore = Infinity;
-
-    for (const tower of world.boosterTowers) {
-      if (tower.collected || !tower.hasBooster) continue;
-      const dx = Math.abs(tower.worldX - hookX);
-      const dyDown = basketFeet - tower.topFeet;
-      if (dx > GRAPPLE_HORIZONTAL_REACH_FEET || dyDown < 0 || dyDown > GRAPPLE_MAX_REACH_FEET) continue;
-      const score = dx + dyDown * 0.35;
-      if (score < bestScore) {
-        bestScore = score;
-        best = tower;
+      function clamp(v, lo, hi) {
+        return Math.max(lo, Math.min(hi, v));
       }
-    }
-    return best;
-  }
 
-  function resetGrappleToBalloon() {
-    const hookX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
-    const basketFeet = plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL;
-    smoke.grapple.startX = hookX;
-    smoke.grapple.startFeet = basketFeet;
-    smoke.grapple.endX = hookX;
-    smoke.grapple.endFeet = basketFeet - GRAPPLE_MAX_REACH_FEET;
-    smoke.grapple.hookX = hookX;
-    smoke.grapple.hookFeet = basketFeet;
-    smoke.grapple.progress = 0;
-    smoke.grapple.targetTower = null;
-    smoke.grapple.hasPack = false;
-    smoke.grapple.cableLengthFeet = 0;
-    smoke.grapple.state = "idle";
-  }
-
-  function tryStartGrapple() {
-    if (gameState !== STATE_PLAYING) return;
-    if (smoke.grapple.state === "raising") return;
-    if (smoke.grapple.state === "extending" || smoke.grapple.state === "extended") {
-      resetGrappleToBalloon();
-      return;
-    }
-    if (smoke.inventory >= MAX_SMOKE_INVENTORY) return;
-    const hookX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
-    const basketFeet = plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL;
-
-    smoke.grapple.startX = hookX;
-    smoke.grapple.startFeet = basketFeet;
-    smoke.grapple.endX = hookX;
-    smoke.grapple.endFeet = basketFeet - GRAPPLE_MAX_REACH_FEET;
-    smoke.grapple.hookX = hookX;
-    smoke.grapple.hookFeet = basketFeet;
-    smoke.grapple.progress = 0;
-    smoke.grapple.targetTower = null;
-    smoke.grapple.hasPack = false;
-    smoke.grapple.cableLengthFeet = 0;
-    smoke.grapple.state = "extending";
-  }
-
-  function releaseSmokeBoost() {
-    if (smoke.inventory <= 0 || gameState !== STATE_PLAYING) return;
-    smoke.inventory--;
-    smoke.boostTimer = 2.55;
-    smoke.activePaletteIndex = smoke.nextActivationColorIndex;
-    smoke.nextActivationColorIndex = (smoke.nextActivationColorIndex + 1) % 2;
-    playSmokeSfx();
-    const sourceX = smokeSourceX();
-    const sourceY = smokeSourceY();
-    for (let i = 0; i < 22; i++) {
-      smoke.trail.push({
-        x: sourceX - i * 4,
-        y: sourceY + (Math.random() * 6 - 3),
-        vx: -100 - Math.random() * 180,
-        vy: -16 + Math.random() * 32,
-        life: 0.8 + Math.random() * 0.6,
-        maxLife: 0.8 + Math.random() * 0.6,
-        paletteIndex: smoke.activePaletteIndex
-      });
-    }
-  }
-
-  window.addEventListener("keydown", e => {
-    const k = e.key.toLowerCase();
-    keys[k] = true;
-    if (["arrowup", "arrowdown", " ", "w", "s", "h", "l", "b", "enter"].includes(k)) e.preventDefault();
-    if (k === "h") {
-      helpVisible = !helpVisible;
-      syncHelp();
-    }
-    if (k === "l") {
-      showIsolines = !showIsolines;
-    }
-    if ((k === " " || k === "enter") && gameState === STATE_START) {
-      startRun();
-    } else if (k === " " && gameState === STATE_PLAYING) {
-      tryStartGrapple();
-    } else if (k === "b" && gameState === STATE_PLAYING) {
-      releaseSmokeBoost();
-    }
-    if ((gameState === STATE_CRASHED || gameState === STATE_FINISHED) && k === "r") resetGame();
-  });
-
-  window.addEventListener("keyup", e => {
-    keys[e.key.toLowerCase()] = false;
-  });
-
-  window.addEventListener("mousedown", () => {
-    if (gameState === STATE_START) startRun();
-  });
-
-  musicToggle.addEventListener("click", () => {
-    audioSettings.musicMuted = !audioSettings.musicMuted;
-    syncAudioMuteStates();
-  });
-
-  soundToggle.addEventListener("click", () => {
-    audioSettings.soundsMuted = !audioSettings.soundsMuted;
-    syncAudioMuteStates();
-  });
-
-  const PLANE_X_FRAC = 0.25;
-  const PLANE_Y_FRAC = 0.48;
-  const SCREEN_FT_PER_PIXEL = 80;
-
-  const GROUND_FEET_MSL = 0;
-  const JET_BAND_HALF_THICKNESS = 1400;
-  const JETSTREAM_ACTIVATION_MARGIN_FEET = 900;
-  const MAX_SMOKE_INVENTORY = 2;
-  const SEA_LEVEL_PRESSURE_MB = 1013.25;
-  const ISOLINE_SURFACE_PRESSURE_MB = 1013.5;
-  const JETSTREAM_PRESSURE_MB = 250;
-  const JETSTREAM_SLEW_RATE = 0.55;
-  const SPACE_FADE_START_FEET = 90000;
-  const BLACK_SKY_START_FEET = 110000;
-  const BALLOON_BURST_FEET = 200000;
-
-  const plane = {
-    xFeet: 0,
-    yFeetMSL: 8000,
-    vy: 0,
-    baseForwardSpeed: 1850,
-    forwardSpeed: 1850,
-    climbAccel: 22800,
-    drag: 0.945,
-    maxClimb: 11800,
-    maxDescent: -11800
-  };
-
-  const world = {
-    trees: [],
-    critters: [],
-    lowClouds: [],
-    boosterTowers: [],
-    nextClusterX: 0,
-    nextTowerXFeet: 0,
-    clusterSeed: 0,
-    stars: [],
-    biomeBands: []
-  };
-
-  const air = {
-    stepPx: 8,
-    offsetPx: 0,
-    tempCols: [],
-    currentTemp: -35,
-    targetTemp: -35,
-    segmentRemaining: 0
-  };
-
-  const smoke = {
-    canisters: [],
-    trail: [],
-    spawnTimer: 2.5,
-    inventory: 0,
-    boostTimer: 0,
-    nextActivationColorIndex: 0,
-    activePaletteIndex: 0,
-    grapple: {
-      state: "idle",
-      progress: 0,
-      startX: 0,
-      startFeet: 0,
-      endX: 0,
-      endFeet: 0,
-      hookX: 0,
-      hookFeet: 0,
-      targetTower: null,
-      hasPack: false,
-      cableLengthFeet: 0
-    }
-  };
-
-  const jetstreamState = {
-    targetDriverTempC: 0,
-    driverTempC: 0,
-    centerHeightFeet: 0
-  };
-
-
-  const BIOME_MIN_MILES = 50;
-  const BIOME_MAX_MILES = 100;
-  const BIOME_BLEND_MILES = 24;
-  const JETSTREAM_TEMP_AMPLIFICATION = 1.9;
-  const JETSTREAM_BASE_ALTITUDE_SHIFT_FEET = -6500;
-  const SMOKE_BOOST_SPEED_BONUS = 2200;
-  const GRAPPLE_MAX_REACH_FEET = 18000;
-  const GRAPPLE_HORIZONTAL_REACH_FEET = 5200;
-  const GRAPPLE_SNAG_X_FEET = 3200;
-  const GRAPPLE_SNAG_Y_FEET = 1800;
-  const GRAPPLE_EXTEND_SPEED_FPS = 26000;
-  const GRAPPLE_RAISE_SPEED_FPS = 12000;
-  const BOOSTER_TOWER_MIN_SPACING_FEET = 18000;
-  const BOOSTER_TOWER_MAX_SPACING_FEET = 36000;
-  const BIOMES = [
-    {
-      key: "temperate",
-      name: "Temperate Forest",
-      decorKinds: ["pine", "oak", "shrub"],
-      wildlifeKinds: ["deer", "fox", "owl"],
-      decorBias: 0.74,
-      spacingMin: 18,
-      spacingMax: 34,
-      baseTempC: -2,
-      surfaceType: "land",
-      surfaceAmpFeet: 700,
-      groundTop: [78, 126, 70],
-      groundBottom: [36, 78, 34],
-      waterTop: [78, 126, 70],
-      waterBottom: [36, 78, 34],
-      skyGround: [172, 102, 98],
-      skyWater: [172, 102, 98],
-      spriteColor: [232, 255, 232]
-    },
-    {
-      key: "tropical",
-      name: "Tropical Forest",
-      decorKinds: ["palm", "fern", "broadleaf"],
-      wildlifeKinds: ["parrot", "lizard", "monkey"],
-      decorBias: 0.76,
-      spacingMin: 18,
-      spacingMax: 30,
-      baseTempC: 13,
-      surfaceType: "land",
-      surfaceAmpFeet: 850,
-      groundTop: [66, 142, 82],
-      groundBottom: [20, 90, 48],
-      waterTop: [66, 142, 82],
-      waterBottom: [20, 90, 48],
-      skyGround: [194, 106, 92],
-      skyWater: [194, 106, 92],
-      spriteColor: [232, 255, 228]
-    },
-
-    {
-      key: "desert",
-      name: "Desert",
-      decorKinds: ["cactus", "rock", "mesa"],
-      wildlifeKinds: ["snake", "lizard", "scorpion"],
-      decorBias: 0.75,
-      spacingMin: 22,
-      spacingMax: 38,
-      baseTempC: 16,
-      surfaceType: "land",
-      surfaceAmpFeet: 900,
-      groundTop: [196, 162, 88],
-      groundBottom: [128, 94, 52],
-      waterTop: [196, 162, 88],
-      waterBottom: [128, 94, 52],
-      skyGround: [208, 116, 82],
-      skyWater: [208, 116, 82],
-      spriteColor: [255, 244, 210]
-    },
-    {
-      key: "tundra",
-      name: "Tundra",
-      decorKinds: ["spruce", "snowmound", "bare"],
-      wildlifeKinds: ["hare", "caribou", "owl"],
-      decorBias: 0.72,
-      spacingMin: 20,
-      spacingMax: 36,
-      baseTempC: -18,
-      surfaceType: "land",
-      surfaceAmpFeet: 950,
-      groundTop: [246, 248, 252],
-      groundBottom: [198, 214, 228],
-      waterTop: [246, 248, 252],
-      waterBottom: [198, 214, 228],
-      skyGround: [142, 118, 154],
-      skyWater: [142, 118, 154],
-      spriteColor: [255, 255, 255]
-    },
-    {
-      key: "grassland",
-      name: "Grassland",
-      decorKinds: ["tuft", "flower", "hay"],
-      wildlifeKinds: ["bison", "rabbit", "hawk"],
-      decorBias: 0.72,
-      spacingMin: 18,
-      spacingMax: 34,
-      baseTempC: 7,
-      surfaceType: "land",
-      surfaceAmpFeet: 800,
-      groundTop: [144, 170, 78],
-      groundBottom: [78, 110, 42],
-      waterTop: [144, 170, 78],
-      waterBottom: [78, 110, 42],
-      skyGround: [184, 110, 92],
-      skyWater: [184, 110, 92],
-      spriteColor: [244, 255, 220]
-    },
-    {
-      key: "badlands",
-      name: "Badlands",
-      decorKinds: ["spike", "butte", "stone"],
-      wildlifeKinds: ["coyote", "vulture", "lizard"],
-      decorBias: 0.7,
-      spacingMin: 22,
-      spacingMax: 40,
-      baseTempC: 9,
-      surfaceType: "land",
-      surfaceAmpFeet: 850,
-      groundTop: [204, 164, 118],
-      groundBottom: [148, 102, 70],
-      waterTop: [204, 164, 118],
-      waterBottom: [148, 102, 70],
-      skyGround: [188, 114, 96],
-      skyWater: [188, 114, 96],
-      spriteColor: [255, 235, 205]
-    },
-    {
-      key: "coldOcean",
-      name: "Cold Ocean",
-      decorKinds: ["wave", "berg", "foam"],
-      wildlifeKinds: ["fish", "loon", "gull"],
-      decorBias: 0.79,
-      spacingMin: 18,
-      spacingMax: 30,
-      baseTempC: -10,
-      surfaceType: "oceanCold",
-      surfaceAmpFeet: 3200,
-      groundTop: [182, 212, 226],
-      groundBottom: [116, 154, 182],
-      waterTop: [102, 162, 214],
-      waterBottom: [30, 86, 144],
-      skyGround: [124, 126, 170],
-      skyWater: [88, 126, 196],
-      spriteColor: [236, 248, 255]
-    },
-    {
-      key: "warmOcean",
-      name: "Warm Ocean",
-      decorKinds: ["wave", "reef", "foam"],
-      wildlifeKinds: ["fish", "gull", "parrot"],
-      decorBias: 0.79,
-      spacingMin: 18,
-      spacingMax: 30,
-      baseTempC: 11,
-      surfaceType: "oceanWarm",
-      surfaceAmpFeet: 3000,
-      groundTop: [122, 192, 170],
-      groundBottom: [54, 126, 122],
-      waterTop: [76, 172, 196],
-      waterBottom: [18, 108, 144],
-      skyGround: [170, 118, 138],
-      skyWater: [148, 122, 154],
-      spriteColor: [224, 255, 248]
-    }
-  ];
-
-  const BIOME_BASE_TEMP_MIN_C = Math.min(...BIOMES.map(b => b.baseTempC));
-  const BIOME_BASE_TEMP_MAX_C = Math.max(...BIOMES.map(b => b.baseTempC));
-  const BIOME_BY_KEY = Object.fromEntries(BIOMES.map(b => [b.key, b]));
-
-  const RANDOM_BIOME_KEYS = ["grassland", "badlands", "desert", "tundra", "coldOcean", "warmOcean", "tropical"];
-  let presetBiomeRoute = [];
-
-  function randomChoice(list) {
-    return list[Math.floor(Math.random() * list.length)];
-  }
-
-  function randomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  function buildRandomBiomeRoute() {
-    const route = [["temperate", randomInt(90, 130)]];
-    let totalMiles = route[0][1];
-    let lastKey = "temperate";
-
-    while (totalMiles < ROUTE_MILES - 140) {
-      const choices = RANDOM_BIOME_KEYS.filter(key => key !== lastKey);
-      const nextKey = randomChoice(choices);
-      const nextSpan = randomInt(55, 115);
-      route.push([nextKey, nextSpan]);
-      totalMiles += nextSpan;
-      lastKey = nextKey;
-    }
-
-    const finalSpan = Math.max(90, ROUTE_MILES - totalMiles);
-    route.push(["temperate", finalSpan]);
-    return route;
-  }
-
-  function initBiomeBands() {
-    presetBiomeRoute = buildRandomBiomeRoute();
-    world.biomeBands = [];
-    let start = 0;
-    for (const [key, spanMiles] of presetBiomeRoute) {
-      const biome = getBiomeByKey(key);
-      const end = start + spanMiles;
-      world.biomeBands.push({ startMile: start, endMile: end, biome });
-      start = end;
-    }
-    while (start < ROUTE_MILES + 300) {
-      const biome = getBiomeByKey("temperate");
-      const end = start + 75;
-      world.biomeBands.push({ startMile: start, endMile: end, biome });
-      start = end;
-    }
-  }
-
-  function getBiomeBandAtRouteFeet(routeFeet) {
-    if (!world.biomeBands.length) initBiomeBands();
-    const mile = Math.max(0, routeFeet / FEET_PER_MILE);
-    for (const band of world.biomeBands) {
-      if (mile >= band.startMile && mile < band.endMile) return band;
-    }
-    return world.biomeBands[world.biomeBands.length - 1];
-  }
-
-  function currentBiomeBand() {
-    return getBiomeBandAtRouteFeet(tripProgressFeet());
-  }
-
-  let score = 0;
-  let timeElapsed = 0;
-  let lastTime = performance.now();
-  let sunAngle = 0;
-  let balloonBurst = false;
-  let burstTimer = 0;
-  let burstPieces = [];
-
-  const audioState = {
-    jetstreamTriggered: false,
-    endTriggered: false,
-    victoryTriggered: false,
-    queue: [],
-    current: null,
-    smokeClips: [],
-    primed: false
-  };
-
-  const audioSettings = {
-    musicMuted: false,
-    soundsMuted: false
-  };
-
-  function makeAudio(name, loop = false) {
-    const a = new Audio(name);
-    a.preload = "auto";
-    a.loop = loop;
-    return a;
-  }
-
-  const audio = {
-    engage: makeAudio("engage.mp3"),
-    intro: makeAudio("Intro.mp3"),
-    main: makeAudio("Main.mp3", true),
-    end: makeAudio("End.mp3"),
-    victory: makeAudio("victory.mp3"),
-    victory2: makeAudio("victory2.mp3")
-  };
-
-  const smokeSfxTemplate = makeAudio("smoke.mp3");
-
-  function syncAudioMuteStates() {
-    for (const clip of Object.values(audio)) {
-      clip.muted = audioSettings.musicMuted;
-    }
-    for (const clip of audioState.smokeClips) {
-      clip.muted = audioSettings.soundsMuted;
-    }
-    musicToggle.textContent = `Music: ${audioSettings.musicMuted ? "Off" : "On"}`;
-    soundToggle.textContent = `Sounds: ${audioSettings.soundsMuted ? "Off" : "On"}`;
-  }
-
-  function stopAllAudio() {
-    for (const clip of Object.values(audio)) {
-      clip.pause();
-      clip.currentTime = 0;
-    }
-    for (const clip of audioState.smokeClips) {
-      clip.pause();
-      clip.currentTime = 0;
-    }
-    audioState.smokeClips = [];
-    audioState.queue = [];
-    audioState.current = null;
-  }
-
-  function primeClip(clip) {
-    if (!clip) return;
-    const previousMuted = clip.muted;
-    clip.muted = true;
-    clip.currentTime = 0;
-    const playPromise = clip.play();
-    if (playPromise && typeof playPromise.then === "function") {
-      playPromise.then(() => {
-        clip.pause();
-        clip.currentTime = 0;
-        clip.muted = previousMuted || audioSettings.musicMuted;
-      }).catch(() => {
-        clip.muted = previousMuted || audioSettings.musicMuted;
-      });
-    } else {
-      try {
-        clip.pause();
-        clip.currentTime = 0;
-      } catch (e) {}
-      clip.muted = previousMuted || audioSettings.musicMuted;
-    }
-  }
-
-  function primeAudioClips() {
-    if (audioState.primed) return;
-    audioState.primed = true;
-    for (const clip of Object.values(audio)) {
-      try {
-        clip.load();
-      } catch (e) {}
-    }
-    primeClip(audio.end);
-    primeClip(audio.victory);
-    primeClip(audio.victory2);
-  }
-
-  function playQueuedAudio(list) {
-    if (!list.length) return;
-    audioState.queue = list.slice();
-    if (!audioState.current) playNextQueuedAudio();
-  }
-
-  function playNextQueuedAudio() {
-    if (!audioState.queue.length) {
-      audioState.current = null;
-      return;
-    }
-
-    const clip = audioState.queue.shift();
-    audioState.current = clip;
-    clip.currentTime = 0;
-    clip.muted = audioSettings.musicMuted;
-
-    const onEnded = () => {
-      if (audioState.current === clip) {
-        audioState.current = null;
+      function lerp(a, b, t) {
+        return a + (b - a) * t;
       }
-      playNextQueuedAudio();
-    };
 
-    clip.addEventListener("ended", onEnded, { once: true });
+      function smoothstep(edge0, edge1, x) {
+        const t = clamp((x - edge0) / (edge1 - edge0), 0, 1);
+        return t * t * (3 - 2 * t);
+      }
 
-    const playPromise = clip.play();
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(() => {
-        if (audioState.current === clip) {
-          audioState.current = null;
+      function formatTime(seconds) {
+        const whole = Math.max(0, Math.floor(seconds));
+        const mins = Math.floor(whole / 60);
+        const secs = whole % 60;
+        return `${mins}:${String(secs).padStart(2, "0")}`;
+      }
+
+      const keys = {};
+      let helpVisible = false;
+      let showIsolines = true;
+
+      function syncHelp() {
+        help.hidden = !helpVisible;
+        helpHint.hidden = helpVisible;
+      }
+
+      const STATE_START = "start";
+      const STATE_PLAYING = "playing";
+      const STATE_CRASHED = "crashed";
+      const STATE_FINISHED = "finished";
+      let gameState = STATE_START;
+
+      const ROUTE_MILES = 2401;
+      const FEET_PER_MILE = 5280;
+      const ROUTE_FEET = ROUTE_MILES * FEET_PER_MILE;
+      const TRIP_PROGRESS_SCALE = 17;
+      const CITY_GROUND_PADDING_FEET = 2600;
+      const START_CITY_X = 5000;
+      const FINISH_CITY_X = ROUTE_FEET + 12000;
+
+      function startRun() {
+        if (gameState === STATE_START) {
+          primeAudioClips();
+          gameState = STATE_PLAYING;
+          lastTime = performance.now();
         }
-        playNextQueuedAudio();
-      });
-    }
-  }
-
-  function triggerJetstreamAudioSequence() {
-    if (audioState.jetstreamTriggered) return;
-    audioState.jetstreamTriggered = true;
-    playQueuedAudio([audio.engage, audio.intro, audio.main]);
-  }
-
-  function triggerEndAudio() {
-    if (audioState.endTriggered) return;
-    audioState.endTriggered = true;
-    audioState.queue = [];
-    if (audioState.current) {
-      try {
-        audioState.current.pause();
-      } catch (e) {}
-      audioState.current = null;
-    }
-    audio.main.pause();
-    audio.intro.pause();
-    audio.engage.pause();
-    audio.end.currentTime = 0;
-    audio.end.muted = audioSettings.musicMuted;
-    const playPromise = audio.end.play();
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(() => {});
-    }
-  }
-
-  function triggerVictoryAudio() {
-    if (audioState.victoryTriggered) return;
-    audioState.victoryTriggered = true;
-    stopAllAudio();
-    const victoryClip = Math.random() < 0.5 ? audio.victory : audio.victory2;
-    victoryClip.muted = audioSettings.musicMuted;
-    const playPromise = victoryClip.play();
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(() => {});
-    }
-  }
-
-  function playSmokeSfx() {
-    const clip = smokeSfxTemplate.cloneNode();
-    clip.currentTime = 0;
-    clip.muted = audioSettings.soundsMuted;
-    audioState.smokeClips.push(clip);
-
-    const cleanup = () => {
-      const idx = audioState.smokeClips.indexOf(clip);
-      if (idx >= 0) audioState.smokeClips.splice(idx, 1);
-    };
-
-    clip.addEventListener("ended", cleanup, { once: true });
-    clip.addEventListener("error", cleanup, { once: true });
-
-    const playPromise = clip.play();
-    if (playPromise && typeof playPromise.catch === "function") {
-      playPromise.catch(() => {
-        cleanup();
-      });
-    }
-  }
-
-  function planeScreenX() {
-    return Math.floor(canvas.width * PLANE_X_FRAC);
-  }
-
-  function planeScreenY() {
-    return Math.floor(canvas.height * PLANE_Y_FRAC);
-  }
-
-  function screenYFromFeet(feetMSL) {
-    return planeScreenY() - (feetMSL - plane.yFeetMSL) / SCREEN_FT_PER_PIXEL;
-  }
-
-  function worldXToScreenX(worldFeet) {
-    return planeScreenX() + (worldFeet - plane.xFeet) / SCREEN_FT_PER_PIXEL;
-  }
-
-  function tripProgressFeet() {
-    return plane.xFeet * TRIP_PROGRESS_SCALE;
-  }
-
-  function spaceFadeAlpha() {
-    return clamp((plane.yFeetMSL - SPACE_FADE_START_FEET) / (BALLOON_BURST_FEET - SPACE_FADE_START_FEET), 0, 1);
-  }
-
-  function initStars() {
-    world.stars = [];
-    const count = Math.max(80, Math.floor((canvas.width * canvas.height) / 9000));
-    for (let i = 0; i < count; i++) {
-      world.stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height * 0.78,
-        size: Math.random() < 0.82 ? 1 : 2,
-        twinkle: Math.random() * Math.PI * 2
-      });
-    }
-  }
-
-  function burstBalloon() {
-    if (balloonBurst) return;
-    balloonBurst = true;
-    burstTimer = 1.8;
-    burstPieces = [];
-    const px = planeScreenX() + 18;
-    const py = planeScreenY() - 30;
-    for (let i = 0; i < 16; i++) {
-      const a = (Math.PI * 2 * i) / 16 + Math.random() * 0.18;
-      const speed = 80 + Math.random() * 180;
-      burstPieces.push({
-        x: px,
-        y: py,
-        vx: Math.cos(a) * speed,
-        vy: Math.sin(a) * speed - 40,
-        life: 0.8 + Math.random() * 0.8,
-        maxLife: 0.8 + Math.random() * 0.8
-      });
-    }
-    plane.vy = Math.min(plane.vy, -22000);
-  }
-
-  function routeFeetAtScreenX(screenX) {
-    return Math.max(0, tripProgressFeet() + (screenX - planeScreenX()) * SCREEN_FT_PER_PIXEL);
-  }
-
-  function getBiomeBandIndexAtRouteFeet(routeFeet) {
-    if (!world.biomeBands.length) initBiomeBands();
-    const mile = Math.max(0, routeFeet / FEET_PER_MILE);
-    for (let i = 0; i < world.biomeBands.length; i++) {
-      const band = world.biomeBands[i];
-      if (mile >= band.startMile && mile < band.endMile) return i;
-    }
-    return Math.max(0, world.biomeBands.length - 1);
-  }
-
-  function getBiomeBlendInfoAtRouteFeet(routeFeet) {
-    const mile = Math.max(0, routeFeet / FEET_PER_MILE);
-    const idx = getBiomeBandIndexAtRouteFeet(routeFeet);
-    const band = world.biomeBands[idx];
-    const blendMiles = BIOME_BLEND_MILES;
-
-    if (idx > 0 && mile < band.startMile + blendMiles) {
-      const prev = world.biomeBands[idx - 1];
-      const t = clamp((mile - (band.startMile - blendMiles)) / (blendMiles * 2), 0, 1);
-      return { primaryBiome: prev.biome, secondaryBiome: band.biome, mix: t, band };
-    }
-
-    if (idx < world.biomeBands.length - 1 && mile > band.endMile - blendMiles) {
-      const next = world.biomeBands[idx + 1];
-      const t = clamp((mile - (band.endMile - blendMiles)) / (blendMiles * 2), 0, 1);
-      return { primaryBiome: band.biome, secondaryBiome: next.biome, mix: t, band };
-    }
-
-    return { primaryBiome: band.biome, secondaryBiome: null, mix: 0, band };
-  }
-
-  function pseudo01(n) {
-    const v = Math.sin(n * 12.9898 + 78.233) * 43758.5453123;
-    return v - Math.floor(v);
-  }
-
-  function chooseBiomeForRouteFeet(routeFeet, salt = 0) {
-    const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
-    if (!info.secondaryBiome) return info.primaryBiome;
-    return pseudo01(routeFeet * 0.000013 + salt * 0.173) < info.mix
-      ? info.secondaryBiome
-      : info.primaryBiome;
-  }
-
-  function getBlendedBiomeBaseTempAtRouteFeet(routeFeet) {
-    const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
-    if (!info.secondaryBiome) return info.primaryBiome.baseTempC;
-    return lerp(info.primaryBiome.baseTempC, info.secondaryBiome.baseTempC, info.mix);
-  }
-
-  function getBiomeByKey(key) {
-    return BIOME_BY_KEY[key] || BIOMES[0];
-  }
-
-  function getBlendedBiomeColorAtRouteFeet(routeFeet, prop) {
-    const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
-    const a = info.primaryBiome[prop];
-    if (!info.secondaryBiome) return a;
-    return mixColor(a, info.secondaryBiome[prop], info.mix);
-  }
-
-  function getBlockBlendInfo(routeFeet, blockFeet, blendFeet, seed, threshold = 0.5) {
-    const index = Math.floor(routeFeet / blockFeet);
-    const start = index * blockFeet;
-    const end = start + blockFeet;
-    const current = pseudo01(index * 0.61803398875 + seed) < threshold ? 0 : 1;
-    if (blendFeet > 0 && routeFeet - start < blendFeet) {
-      const prev = pseudo01((index - 1) * 0.61803398875 + seed) < threshold ? 0 : 1;
-      const t = smoothstep(0, blendFeet, routeFeet - start);
-      return { primary: prev, secondary: current, mix: t };
-    }
-    if (blendFeet > 0 && end - routeFeet < blendFeet) {
-      const next = pseudo01((index + 1) * 0.61803398875 + seed) < threshold ? 0 : 1;
-      const t = smoothstep(0, blendFeet, blendFeet - (end - routeFeet));
-      return { primary: current, secondary: next, mix: t };
-    }
-    return { primary: current, secondary: current, mix: 0 };
-  }
-
-  function getBinaryBlockValue(routeFeet, blockFeet, blendFeet, seed, threshold = 0.5) {
-    const info = getBlockBlendInfo(routeFeet, blockFeet, blendFeet, seed, threshold);
-    return lerp(info.primary, info.secondary, info.mix);
-  }
-
-  function getSurfaceStateForBiome(routeFeet, biome) {
-    const seed = biome.baseTempC * 0.137 + biome.key.length * 0.91;
-
-    if (biome.surfaceType === "oceanCold") {
-      const waterWeight = clamp(0.8 + 0.2 * getBinaryBlockValue(routeFeet, 160000, 52000, 3.91, 0.32), 0, 1);
-      const tremolo = 0.34 * Math.sin(routeFeet / 62000 + 0.7) + 0.12 * Math.sin(routeFeet / 22000 + 2.2);
-      return { waterWeight, tremolo, ampFeet: biome.surfaceAmpFeet * 0.52 };
-    }
-
-    if (biome.surfaceType === "oceanWarm") {
-      const waterWeight = clamp(0.82 + 0.18 * getBinaryBlockValue(routeFeet, 168000, 56000, 4.63, 0.34), 0, 1);
-      const tremolo = 0.32 * Math.sin(routeFeet / 58000 + 1.1) + 0.11 * Math.sin(routeFeet / 21000 + 0.2);
-      return { waterWeight, tremolo, ampFeet: biome.surfaceAmpFeet * 0.5 };
-    }
-
-    const tremolo = 0.22 * Math.sin(routeFeet / 64000 + seed) + 0.12 * Math.sin(routeFeet / 24000 + seed * 1.7);
-    return { waterWeight: 0.5, tremolo, ampFeet: biome.surfaceAmpFeet || 700 };
-  }
-
-  function mixSurfaceState(a, b, t) {
-    return {
-      waterWeight: lerp(a.waterWeight, b.waterWeight, t),
-      tremolo: lerp(a.tremolo, b.tremolo, t),
-      ampFeet: lerp(a.ampFeet, b.ampFeet, t)
-    };
-  }
-
-  function getSurfaceStateAtRouteFeet(routeFeet) {
-    const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
-    const a = getSurfaceStateForBiome(routeFeet, info.primaryBiome);
-    if (!info.secondaryBiome) return a;
-    const b = getSurfaceStateForBiome(routeFeet, info.secondaryBiome);
-    return mixSurfaceState(a, b, info.mix);
-  }
-
-  function getGroundPaletteForBiomeRoute(routeFeet, biome) {
-    const surface = getSurfaceStateForBiome(routeFeet, biome);
-    return {
-      top: mixColor(biome.groundTop, biome.waterTop || biome.groundTop, surface.waterWeight),
-      bottom: mixColor(biome.groundBottom, biome.waterBottom || biome.groundBottom, surface.waterWeight),
-      skyGround: mixColor(biome.skyGround, biome.skyWater || biome.skyGround, surface.waterWeight),
-      surface
-    };
-  }
-
-  function getGroundPaletteAtRouteFeet(routeFeet) {
-    const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
-    const a = getGroundPaletteForBiomeRoute(routeFeet, info.primaryBiome);
-    if (!info.secondaryBiome) return a;
-    const b = getGroundPaletteForBiomeRoute(routeFeet, info.secondaryBiome);
-    return {
-      top: mixColor(a.top, b.top, info.mix),
-      bottom: mixColor(a.bottom, b.bottom, info.mix),
-      skyGround: mixColor(a.skyGround, b.skyGround, info.mix),
-      surface: mixSurfaceState(a.surface, b.surface, info.mix)
-    };
-  }
-
-  function getGroundPaletteAtScreenX(screenX) {
-    return getGroundPaletteAtRouteFeet(routeFeetAtScreenX(screenX));
-  }
-
-  function getAirBottomColorAtScreenX(screenX) {
-    const tempC = getTempAtScreenX(screenX);
-    const warmNorm = warmNormFromTemp(tempC);
-    return mixColor([120, 138, 196], [222, 150, 126], warmNorm);
-  }
-
-  function getSpriteColorForBiomeKey(key) {
-    return getBiomeByKey(key).spriteColor || [255, 255, 255];
-  }
-
-  function getJetstreamSurfaceOffsetFeetAtScreenX(screenX) {
-    const routeFeet = routeFeetAtScreenX(screenX);
-    const surface = getGroundPaletteAtRouteFeet(routeFeet).surface;
-    const waterSignal = (surface.waterWeight - 0.5) * 2;
-    const smoothedSignal = waterSignal * 0.42 + surface.tremolo * 0.34;
-    return smoothedSignal * surface.ampFeet;
-  }
-
-  function getBiomeAtScreenX(screenX) {
-    return chooseBiomeForRouteFeet(routeFeetAtScreenX(screenX), screenX);
-  }
-
-  function getBiomeBaseTempAtScreenX(screenX) {
-    return getBlendedBiomeBaseTempAtRouteFeet(routeFeetAtScreenX(screenX));
-  }
-
-  function biomeWarmNorm(baseTempC) {
-    return clamp((baseTempC - BIOME_BASE_TEMP_MIN_C) / (BIOME_BASE_TEMP_MAX_C - BIOME_BASE_TEMP_MIN_C), 0, 1);
-  }
-
-  function nextAirTemp() {
-    if (air.segmentRemaining <= 0) {
-      air.segmentRemaining = Math.floor(8 + Math.random() * 18);
-
-      let nextTarget = air.currentTemp + (-2.8 + Math.random() * 5.6);
-      if (Math.random() < 0.22) nextTarget += -3 + Math.random() * 6;
-
-      air.targetTemp = clamp(nextTarget, -8, 8);
-    }
-
-    air.segmentRemaining--;
-
-    const diff = air.targetTemp - air.currentTemp;
-    air.currentTemp += clamp(diff, -0.55, 0.55);
-
-    if (Math.random() < 0.18) {
-      air.currentTemp += Math.random() < 0.5 ? -0.25 : 0.25;
-    }
-
-    air.currentTemp = clamp(air.currentTemp, -8, 8);
-    return air.currentTemp;
-  }
-
-  function initAir() {
-    air.tempCols = [];
-    air.offsetPx = 0;
-    air.currentTemp = 0;
-    air.targetTemp = 0;
-    air.segmentRemaining = 0;
-
-    const count = Math.ceil(canvas.width / air.stepPx) + 30;
-    for (let i = 0; i < count; i++) {
-      air.tempCols.push(nextAirTemp());
-    }
-  }
-
-  function updateAir(dt) {
-    const pxPerSec = plane.forwardSpeed / 10;
-    air.offsetPx += pxPerSec * dt;
-
-    while (air.offsetPx >= air.stepPx) {
-      air.offsetPx -= air.stepPx;
-      air.tempCols.shift();
-      air.tempCols.push(nextAirTemp());
-    }
-  }
-
-  function getAirAnomalyAtScreenX(screenX) {
-    const idxFloat = (screenX + air.offsetPx) / air.stepPx;
-    const i0 = Math.floor(idxFloat);
-    const i1 = Math.min(i0 + 1, air.tempCols.length - 1);
-    const t = idxFloat - i0;
-
-    const a = air.tempCols[clamp(i0, 0, air.tempCols.length - 1)];
-    const b = air.tempCols[clamp(i1, 0, air.tempCols.length - 1)];
-    return a + (b - a) * t;
-  }
-
-  function getTempAtScreenX(screenX) {
-    return getBiomeBaseTempAtScreenX(screenX) + getAirAnomalyAtScreenX(screenX);
-  }
-
-  function getJetstreamDriverTempAtScreenX(screenX) {
-    const blendedBase = getBiomeBaseTempAtScreenX(screenX);
-    const anomaly = getAirAnomalyAtScreenX(screenX);
-    return blendedBase * JETSTREAM_TEMP_AMPLIFICATION + anomaly * 1.08;
-  }
-
-  function localTemperatureC() {
-    return getTempAtScreenX(planeScreenX());
-  }
-
-  function warmNormFromTemp(tempC) {
-    return clamp((tempC + 65) / 85, 0, 1);
-  }
-
-  function scaleHeightFeetFromTemp(tempC) {
-    return lerp(22000, 31000, warmNormFromTemp(tempC));
-  }
-
-  function pressureAtAltitudeMb(altFeet, tempC) {
-    const H = scaleHeightFeetFromTemp(tempC);
-    return SEA_LEVEL_PRESSURE_MB * Math.exp(-Math.max(0, altFeet) / H);
-  }
-
-  function altitudeForPressureMb(pressureMb, tempC) {
-    const H = scaleHeightFeetFromTemp(tempC);
-    return -H * Math.log(pressureMb / SEA_LEVEL_PRESSURE_MB);
-  }
-
-  function getPressureScaleHeightFeetFromJetstreamCenter(centerHeightFeet) {
-    const safeCenter = Math.max(1000, centerHeightFeet);
-    return safeCenter / Math.log(SEA_LEVEL_PRESSURE_MB / JETSTREAM_PRESSURE_MB);
-  }
-
-  function getPressureFieldMbAt(screenX, altFeet) {
-    const centerHeightFeet = getWarmBoundaryFeetAtScreenX(screenX);
-    const H = getPressureScaleHeightFeetFromJetstreamCenter(centerHeightFeet);
-    return clamp(SEA_LEVEL_PRESSURE_MB * Math.exp(-Math.max(0, altFeet) / H), 0, 1055);
-  }
-
-  function getPressureScaleHeightFeetAtScreenX(screenX) {
-    return getPressureScaleHeightFeetFromJetstreamCenter(getWarmBoundaryFeetAtScreenX(screenX));
-  }
-
-  function getAltitudeFeetForPressureAtScreenX(screenX, pressureMb, surfacePressureMb = ISOLINE_SURFACE_PRESSURE_MB) {
-    const H = getPressureScaleHeightFeetAtScreenX(screenX);
-    const safePressure = clamp(pressureMb, 1, surfacePressureMb - 0.001);
-    return -H * Math.log(safePressure / surfacePressureMb);
-  }
-
-  function getRawJetstreamDriverTempAtScreenX(screenX) {
-    const offsets = [-56, -40, -24, -8, 8, 24, 40, 56];
-    let total = 0;
-    let weightTotal = 0;
-    for (const off of offsets) {
-      const weight = Math.abs(off) <= 8 ? 3 : (Math.abs(off) <= 24 ? 2 : 1);
-      total += getJetstreamDriverTempAtScreenX(screenX + off) * weight;
-      weightTotal += weight;
-    }
-    return total / weightTotal;
-  }
-
-  function getPressureConsistentJetstreamBoundaryFeetAtScreenX(screenX, driverTempC) {
-    return altitudeForPressureMb(JETSTREAM_PRESSURE_MB, driverTempC);
-  }
-
-  function initializeJetstreamState() {
-    const driverTempC = getRawJetstreamDriverTempAtScreenX(planeScreenX());
-    jetstreamState.targetDriverTempC = driverTempC;
-    jetstreamState.driverTempC = driverTempC;
-    jetstreamState.centerHeightFeet = getPressureConsistentJetstreamBoundaryFeetAtScreenX(planeScreenX(), driverTempC);
-  }
-
-  function updateJetstreamState(dt) {
-    const driverTempC = getRawJetstreamDriverTempAtScreenX(planeScreenX());
-    jetstreamState.targetDriverTempC = driverTempC;
-    const slew = 1 - Math.exp(-JETSTREAM_SLEW_RATE * 60 * dt);
-    jetstreamState.driverTempC = lerp(jetstreamState.driverTempC, driverTempC, clamp(slew, 0, 1));
-    jetstreamState.centerHeightFeet = getPressureConsistentJetstreamBoundaryFeetAtScreenX(planeScreenX(), jetstreamState.driverTempC);
-  }
-
-  function getSmoothedTempAtScreenX(screenX) {
-    const offsets = [-48, -32, -16, 0, 16, 32, 48];
-    let total = 0;
-    let weightTotal = 0;
-    for (const off of offsets) {
-      const weight = off === 0 ? 3 : (Math.abs(off) === 16 ? 2 : 1);
-      total += getTempAtScreenX(screenX + off) * weight;
-      weightTotal += weight;
-    }
-    return total / weightTotal;
-  }
-
-  function getWarmBoundaryFeetAtScreenX(screenX) {
-    const localRawDriver = getRawJetstreamDriverTempAtScreenX(screenX);
-    const localAdjustedDriver = localRawDriver + (jetstreamState.driverTempC - jetstreamState.targetDriverTempC);
-    return getPressureConsistentJetstreamBoundaryFeetAtScreenX(screenX, localAdjustedDriver);
-  }
-
-  function getWarmBoundaryScreenYAtScreenX(screenX) {
-    return screenYFromFeet(getWarmBoundaryFeetAtScreenX(screenX));
-  }
-
-  function getTropopauseBandCenterAtScreenX(screenX) {
-    return getWarmBoundaryFeetAtScreenX(screenX);
-  }
-
-  function getTropopauseBandCenterHere() {
-    return getTropopauseBandCenterAtScreenX(planeScreenX());
-  }
-
-  function getBarometerMb() {
-    return getPressureFieldMbAt(planeScreenX(), plane.yFeetMSL);
-  }
-
-  function inJetstreamBand() {
-    const bandCenter = getTropopauseBandCenterHere();
-    const bandTop = bandCenter + JET_BAND_HALF_THICKNESS + JETSTREAM_ACTIVATION_MARGIN_FEET;
-    const bandBottom = bandCenter - JET_BAND_HALF_THICKNESS - JETSTREAM_ACTIVATION_MARGIN_FEET;
-    const balloon = getBalloonBoundsFeet();
-    return !(balloon.topFeet < bandBottom || balloon.bottomFeet > bandTop);
-  }
-
-  function milesRemaining() {
-    return Math.max(0, Math.ceil((ROUTE_FEET - tripProgressFeet()) / FEET_PER_MILE));
-  }
-
-  function makeTree(x, idx, biome) {
-    const sizeBias = 0.9 + Math.random() * 0.55;
-    return {
-      x,
-      biomeKey: biome.key,
-      biomeName: biome.name,
-      kind: randomChoice(biome.decorKinds),
-      h: Math.round((14 + ((idx * 17) % 5) * 6) * sizeBias),
-      lean: ((idx % 5) - 2) * 0.35,
-      width: 8 + (idx % 4) * 2,
-      bob: Math.random() * Math.PI * 2
-    };
-  }
-
-  function makeCritter(x, idx, biome) {
-    return {
-      x,
-      biomeKey: biome.key,
-      biomeName: biome.name,
-      kind: randomChoice(biome.wildlifeKinds),
-      size: 6 + (idx % 3),
-      bob: (idx % 7) * 0.7
-    };
-  }
-
-  function spawnGroundCluster(xStart) {
-    const items = 4 + Math.floor(Math.random() * 8);
-    let x = xStart;
-    for (let i = 0; i < items; i++) {
-      const idx = world.clusterSeed++;
-      const routeFeetAtItem = tripProgressFeet() + Math.max(0, x) * SCREEN_FT_PER_PIXEL;
-      const biome = chooseBiomeForRouteFeet(routeFeetAtItem, idx + x * 0.01);
-      if (Math.random() < biome.decorBias) {
-        world.trees.push(makeTree(x, idx, biome));
-      } else {
-        world.critters.push(makeCritter(x + Math.floor(Math.random() * 10), idx, biome));
       }
-      x += biome.spacingMin + Math.random() * (biome.spacingMax - biome.spacingMin);
-    }
-    world.nextClusterX = x + 120 + Math.random() * 320;
-  }
 
-  function initTrees() {
-    if (!world.biomeBands.length) initBiomeBands();
-    world.trees = [];
-    world.critters = [];
-    world.clusterSeed = 0;
-    world.nextClusterX = 20;
-    while (world.nextClusterX < canvas.width + 260) {
-      spawnGroundCluster(world.nextClusterX);
-    }
-  }
-
-  function spawnLowCloud(xStart = null) {
-    const x = xStart ?? (canvas.width + Math.random() * 120);
-    return {
-      x,
-      y: 0.72 + Math.random() * 0.12,
-      w: 24 + Math.floor(Math.random() * 34),
-      h: 8 + Math.floor(Math.random() * 10)
-    };
-  }
-
-  function initLowClouds() {
-    world.lowClouds = [];
-    const count = 20;
-    for (let i = 0; i < count; i++) {
-      world.lowClouds.push(spawnLowCloud(i * 70));
-    }
-  }
-
-  function updateTrees(dt) {
-    const pxPerSec = plane.forwardSpeed / 10;
-    for (const tree of world.trees) tree.x -= pxPerSec * dt;
-    for (const critter of world.critters) critter.x -= pxPerSec * dt;
-
-    world.nextClusterX -= pxPerSec * dt;
-    world.trees = world.trees.filter(tree => tree.x > -40);
-    world.critters = world.critters.filter(critter => critter.x > -50);
-
-    while (world.nextClusterX < canvas.width + 220) {
-      spawnGroundCluster(world.nextClusterX);
-    }
-  }
-
-  function updateLowClouds(dt) {
-    const temp = localTemperatureC();
-    const warmNorm = clamp((temp + 60) / 70, 0, 1);
-    const pxPerSec = plane.forwardSpeed / 10;
-
-    for (const c of world.lowClouds) c.x -= pxPerSec * dt;
-
-    while (world.lowClouds.length && world.lowClouds[0].x + world.lowClouds[0].w < -40) {
-      world.lowClouds.shift();
-    }
-
-    const desiredCount = 8 + Math.floor(warmNorm * 20);
-    while (world.lowClouds.length < desiredCount) {
-      world.lowClouds.push(spawnLowCloud());
-    }
-  }
-
-  function spawnBoosterTower(worldX = null) {
-    const towerX = worldX ?? (plane.xFeet + canvas.width * SCREEN_FT_PER_PIXEL + 6000 + Math.random() * 14000);
-    const topFeet = 7000 + Math.random() * 11000;
-    world.boosterTowers.push({
-      worldX: towerX,
-      topFeet,
-      hasBooster: true,
-      collected: false
-    });
-  }
-
-  function initBoosterTowers() {
-    world.boosterTowers = [];
-    world.nextTowerXFeet = plane.xFeet + canvas.width * SCREEN_FT_PER_PIXEL * 0.35;
-    const horizonFeet = plane.xFeet + canvas.width * SCREEN_FT_PER_PIXEL * 1.6;
-    while (world.nextTowerXFeet < horizonFeet) {
-      spawnBoosterTower(world.nextTowerXFeet);
-      world.nextTowerXFeet += BOOSTER_TOWER_MIN_SPACING_FEET + Math.random() * (BOOSTER_TOWER_MAX_SPACING_FEET - BOOSTER_TOWER_MIN_SPACING_FEET);
-    }
-  }
-
-  function updateBoosterTowers(dt) {
-    if (gameState !== STATE_PLAYING) return;
-
-    const horizonFeet = plane.xFeet + canvas.width * SCREEN_FT_PER_PIXEL * 1.6;
-    while (world.nextTowerXFeet < horizonFeet) {
-      spawnBoosterTower(world.nextTowerXFeet);
-      world.nextTowerXFeet += BOOSTER_TOWER_MIN_SPACING_FEET + Math.random() * (BOOSTER_TOWER_MAX_SPACING_FEET - BOOSTER_TOWER_MIN_SPACING_FEET);
-    }
-
-    world.boosterTowers = world.boosterTowers.filter(tower => {
-      if (tower.collected && smoke.grapple.targetTower !== tower) return false;
-      return tower.worldX > plane.xFeet - 22000;
-    });
-  }
-
-  function updateGrapple(dt) {
-    if (smoke.grapple.state === "idle") return;
-
-    const basketX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
-    const basketFeet = plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL;
-    smoke.grapple.startX = basketX;
-    smoke.grapple.startFeet = basketFeet;
-
-    if (smoke.grapple.state === "extending") {
-      smoke.grapple.cableLengthFeet = Math.min(GRAPPLE_MAX_REACH_FEET, smoke.grapple.cableLengthFeet + GRAPPLE_EXTEND_SPEED_FPS * dt);
-      smoke.grapple.hookX = basketX;
-      smoke.grapple.hookFeet = basketFeet - smoke.grapple.cableLengthFeet;
-      if (smoke.grapple.cableLengthFeet >= GRAPPLE_MAX_REACH_FEET) {
-        smoke.grapple.state = "extended";
+      function balloonBobOffset() {
+        return balloonBurst ? 0 : Math.sin(timeElapsed * 2.2) * 2;
       }
-    } else if (smoke.grapple.state === "extended") {
-      smoke.grapple.hookX = basketX;
-      smoke.grapple.hookFeet = basketFeet - smoke.grapple.cableLengthFeet;
-    } else if (smoke.grapple.state === "raising") {
-      smoke.grapple.hookX = basketX;
-      smoke.grapple.cableLengthFeet = Math.max(0, smoke.grapple.cableLengthFeet - GRAPPLE_RAISE_SPEED_FPS * dt);
-      smoke.grapple.hookFeet = basketFeet - smoke.grapple.cableLengthFeet;
-      if (smoke.grapple.cableLengthFeet <= 0) {
+
+      function smokeSourceX() {
+        return planeScreenX() + 18;
+      }
+
+      function smokeSourceY() {
+        const basketY = planeScreenY() + balloonBobOffset();
+        return basketY - 2;
+      }
+
+      function balloonEnvelopeScale() {
+        if (balloonBurst) return 1;
+        return lerp(1, 1.55, clamp(plane.yFeetMSL / BALLOON_BURST_FEET, 0, 1));
+      }
+
+      function getBalloonBoundsFeet() {
+        const bob = balloonBobOffset();
+        const scale = balloonEnvelopeScale();
+        const balloonRadiusX = 10 * scale;
+        const balloonRadiusY = 10 * scale;
+        const balloonCenterX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
+        const balloonCenterFeet = plane.yFeetMSL + (30 - bob) * SCREEN_FT_PER_PIXEL;
+        const basketLeftX = plane.xFeet + 12 * SCREEN_FT_PER_PIXEL;
+        const basketRightX = plane.xFeet + 24 * SCREEN_FT_PER_PIXEL;
+        const basketTopFeet = plane.yFeetMSL + (10 - bob) * SCREEN_FT_PER_PIXEL;
+        const basketBottomFeet = plane.yFeetMSL + (-5 - bob) * SCREEN_FT_PER_PIXEL;
+
+        return {
+          leftX: Math.min(balloonCenterX - balloonRadiusX * SCREEN_FT_PER_PIXEL, basketLeftX),
+          rightX: Math.max(balloonCenterX + balloonRadiusX * SCREEN_FT_PER_PIXEL, basketRightX),
+          topFeet: Math.max(balloonCenterFeet + balloonRadiusY * SCREEN_FT_PER_PIXEL, basketTopFeet),
+          bottomFeet: Math.min(balloonCenterFeet - balloonRadiusY * SCREEN_FT_PER_PIXEL, basketBottomFeet)
+        };
+      }
+
+      function getNearestBoosterTowerForGrapple() {
+        if (!world.boosterTowers.length) return null;
+        const hookX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
+        const basketFeet = plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL;
+        let best = null;
+        let bestScore = Infinity;
+
+        for (const tower of world.boosterTowers) {
+          if (tower.collected || !tower.hasBooster) continue;
+          const dx = Math.abs(tower.worldX - hookX);
+          const dyDown = basketFeet - tower.topFeet;
+          if (dx > GRAPPLE_HORIZONTAL_REACH_FEET || dyDown < 0 || dyDown > GRAPPLE_MAX_REACH_FEET) continue;
+          const score = dx + dyDown * 0.35;
+          if (score < bestScore) {
+            bestScore = score;
+            best = tower;
+          }
+        }
+        return best;
+      }
+
+      function resetGrappleToBalloon() {
+        const hookX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
+        const basketFeet = plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL;
+        smoke.grapple.startX = hookX;
+        smoke.grapple.startFeet = basketFeet;
+        smoke.grapple.endX = hookX;
+        smoke.grapple.endFeet = basketFeet - GRAPPLE_MAX_REACH_FEET;
+        smoke.grapple.hookX = hookX;
         smoke.grapple.hookFeet = basketFeet;
-        smoke.grapple.hookX = basketX;
-        if (smoke.grapple.hasPack && smoke.inventory < MAX_SMOKE_INVENTORY) {
-          smoke.inventory++;
-        }
-        smoke.grapple.state = "idle";
+        smoke.grapple.progress = 0;
         smoke.grapple.targetTower = null;
         smoke.grapple.hasPack = false;
+        smoke.grapple.cableLengthFeet = 0;
+        smoke.grapple.state = "idle";
       }
-    }
 
-    if ((smoke.grapple.state === "extending" || smoke.grapple.state === "extended") && !smoke.grapple.hasPack) {
-      let snaggedTower = null;
-      let bestDx = Infinity;
-      for (const tower of world.boosterTowers) {
-        if (tower.collected || !tower.hasBooster) continue;
-        const dx = Math.abs(tower.worldX - smoke.grapple.hookX);
-        if (dx > GRAPPLE_SNAG_X_FEET) continue;
-        const crossedTop = smoke.grapple.hookFeet <= tower.topFeet + GRAPPLE_SNAG_Y_FEET;
-        const notTooFarBelow = smoke.grapple.hookFeet >= tower.topFeet - GRAPPLE_SNAG_Y_FEET;
-        if (!crossedTop || !notTooFarBelow) continue;
-        if (dx < bestDx) {
-          bestDx = dx;
-          snaggedTower = tower;
+      function tryStartGrapple() {
+        if (gameState !== STATE_PLAYING) return;
+        if (smoke.grapple.state === "raising") return;
+        if (smoke.inventory >= MAX_SMOKE_INVENTORY) return;
+        const hookX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
+        const basketFeet = plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL;
+
+        if (smoke.grapple.state === "extended") {
+          if (smoke.grapple.cableLengthFeet < GRAPPLE_MAX_REACH_FEET - 1) {
+            smoke.grapple.state = "extending";
+          }
+          return;
+        }
+
+        if (smoke.grapple.state === "extending") return;
+
+        smoke.grapple.startX = hookX;
+        smoke.grapple.startFeet = basketFeet;
+        smoke.grapple.endX = hookX;
+        smoke.grapple.endFeet = basketFeet - GRAPPLE_MAX_REACH_FEET;
+        smoke.grapple.hookX = hookX;
+        smoke.grapple.hookFeet = basketFeet;
+        smoke.grapple.progress = 0;
+        smoke.grapple.targetTower = null;
+        smoke.grapple.hasPack = false;
+        smoke.grapple.cableLengthFeet = 0;
+        smoke.grapple.state = "extending";
+      }
+
+      function releaseSmokeBoost() {
+        if (smoke.inventory <= 0 || gameState !== STATE_PLAYING) return;
+        smoke.inventory--;
+        smoke.boostTimer = 2.55;
+        smoke.activePaletteIndex = smoke.nextActivationColorIndex;
+        smoke.nextActivationColorIndex = (smoke.nextActivationColorIndex + 1) % 2;
+        playSmokeSfx();
+        const sourceX = smokeSourceX();
+        const sourceY = smokeSourceY();
+        for (let i = 0; i < 22; i++) {
+          smoke.trail.push({
+            x: sourceX - i * 4,
+            y: sourceY + (Math.random() * 6 - 3),
+            vx: -100 - Math.random() * 180,
+            vy: -16 + Math.random() * 32,
+            life: 0.8 + Math.random() * 0.6,
+            maxLife: 0.8 + Math.random() * 0.6,
+            paletteIndex: smoke.activePaletteIndex
+          });
         }
       }
-      if (snaggedTower) {
-        snaggedTower.hasBooster = false;
-        snaggedTower.collected = true;
-        smoke.grapple.targetTower = snaggedTower;
-        smoke.grapple.hasPack = true;
-        smoke.grapple.state = "raising";
-      }
-    }
-  }
 
-  function updateSmokeTrail(dt) {
-    if (smoke.boostTimer > 0) {
-      smoke.boostTimer = Math.max(0, smoke.boostTimer - dt);
-      const sourceX = smokeSourceX();
-      const sourceY = smokeSourceY() + Math.sin(performance.now() / 220) * 1.5;
-      for (let i = 0; i < 3; i++) {
-        smoke.trail.push({
-          x: sourceX + Math.random() * 4 - 2,
-          y: sourceY + Math.random() * 4 - 2,
-          vx: -160 - Math.random() * 260,
-          vy: -20 + Math.random() * 40,
-          life: 0.65 + Math.random() * 0.45,
-          maxLife: 0.65 + Math.random() * 0.45,
-          paletteIndex: smoke.activePaletteIndex
+      window.addEventListener("keydown", e => {
+        const k = e.key.toLowerCase();
+        keys[k] = true;
+        if (["arrowup", "arrowdown", " ", "w", "s", "h", "l", "b", "enter"].includes(k)) e.preventDefault();
+        if (k === "h") {
+          helpVisible = !helpVisible;
+          syncHelp();
+        }
+        if (k === "l") {
+          showIsolines = !showIsolines;
+        }
+        if (gameState === STATE_PLAYING && k === " " && e.repeat) {
+          return;
+        }
+        if (gameState === STATE_FINISHED && finishNameEntryActive) {
+          if (k === "enter") {
+            e.preventDefault();
+            finalizeLeaderboardEntry();
+            return;
+          }
+
+          if (k === "backspace") {
+            e.preventDefault();
+            finishNameBuffer = finishNameBuffer.slice(0, -1);
+            return;
+          }
+
+          if (k.length === 1) {
+            const upper = k.toUpperCase();
+            if (/^[A-Z0-9 !?.\-]$/.test(upper) && finishNameBuffer.length < 10) {
+              e.preventDefault();
+              finishNameBuffer += upper;
+            }
+            return;
+          }
+        }
+        if ((k === " " || k === "enter") && gameState === STATE_START) {
+          startRun();
+        } else if (k === " " && gameState === STATE_PLAYING) {
+          tryStartGrapple();
+        } else if (k === "b" && gameState === STATE_PLAYING) {
+          releaseSmokeBoost();
+        }
+        if ((gameState === STATE_CRASHED || gameState === STATE_FINISHED) && k === "r" && !finishNameEntryActive) {
+          resetGame();
+        }
+      });
+
+      window.addEventListener("keyup", e => {
+        keys[e.key.toLowerCase()] = false;
+      });
+
+      window.addEventListener("mousedown", () => {
+        if (gameState === STATE_START) startRun();
+      });
+
+      musicToggle.addEventListener("click", () => {
+        audioSettings.musicMuted = !audioSettings.musicMuted;
+        syncAudioMuteStates();
+      });
+
+      soundToggle.addEventListener("click", () => {
+        audioSettings.soundsMuted = !audioSettings.soundsMuted;
+        syncAudioMuteStates();
+      });
+
+      function loadLeaderboard() {
+        try {
+          const raw = localStorage.getItem(LEADERBOARD_KEY);
+          if (!raw) return DEFAULT_LEADERBOARD.map(entry => ({ ...entry }));
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed) || !parsed.length) {
+            return DEFAULT_LEADERBOARD.map(entry => ({ ...entry }));
+          }
+          return parsed
+            .map(entry => ({
+              name: String(entry.name || "PLAYER").slice(0, 10).toUpperCase(),
+              time: Number(entry.time || 9999)
+            }))
+            .sort((a, b) => a.time - b.time)
+            .slice(0, LEADERBOARD_SIZE);
+        } catch (e) {
+          return DEFAULT_LEADERBOARD.map(entry => ({ ...entry }));
+        }
+      }
+
+      function saveLeaderboard() {
+        try {
+          localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+        } catch (e) { }
+      }
+
+      function qualifiesForLeaderboard(runTime) {
+        if (leaderboard.length < LEADERBOARD_SIZE) return true;
+        return runTime < leaderboard[leaderboard.length - 1].time;
+      }
+
+      function isFastestTime(runTime) {
+        return leaderboard.length === 0 || runTime < leaderboard[0].time;
+      }
+
+      function getProjectedLeaderboard(runTime, pendingName = "YOURNAME") {
+        const nextBoard = leaderboard.map(entry => ({ ...entry }));
+        nextBoard.push({
+          name: String(pendingName || "PLAYER").slice(0, 10).toUpperCase(),
+          time: runTime
+        });
+        nextBoard.sort((a, b) => a.time - b.time);
+        return nextBoard.slice(0, LEADERBOARD_SIZE);
+      }
+
+      function getRunRank(runTime) {
+        const projected = getProjectedLeaderboard(runTime, "PLAYER");
+        return projected.findIndex(entry => entry.time === runTime) + 1;
+      }
+
+      function finalizeLeaderboardEntry() {
+        if (!finishRunQualified || finishInsertedScore) {
+          finishNameEntryActive = false;
+          return;
+        }
+
+        const trimmed = finishNameBuffer.trim().toUpperCase();
+        const safeName = trimmed || "PLAYER";
+
+        leaderboard = getProjectedLeaderboard(finishRunTimeSeconds, safeName);
+        saveLeaderboard();
+
+        finishRunRank = leaderboard.findIndex(entry => entry.name === safeName.slice(0, 10) && entry.time === finishRunTimeSeconds) + 1;
+        finishNameEntryActive = false;
+        finishInsertedScore = true;
+      }
+
+      function startFinishNameEntry() {
+        finishRunTimeSeconds = Math.max(0, Math.floor(timeElapsed));
+        finishRunQualified = qualifiesForLeaderboard(finishRunTimeSeconds);
+        finishRunWasFastest = isFastestTime(finishRunTimeSeconds);
+        finishRunRank = finishRunQualified ? getRunRank(finishRunTimeSeconds) : null;
+        finishInsertedScore = false;
+        finishCursorTimer = 0;
+        finishNameBuffer = "";
+
+        if (finishRunQualified) {
+          finishNameEntryActive = true;
+        } else {
+          finishNameEntryActive = false;
+        }
+      }
+
+      function getLeaderboardLines(board = leaderboard) {
+        const lines = [];
+        for (let i = 0; i < board.length; i++) {
+          const entry = board[i];
+          const rank = String(i + 1).padStart(2, " ");
+          const name = entry.name.padEnd(10, " ");
+          lines.push(`${rank}. ${name} ${formatTime(entry.time)}`);
+        }
+        return lines;
+      }
+
+      const PLANE_X_FRAC = 0.25;
+      const PLANE_Y_FRAC = 0.48;
+      const SCREEN_FT_PER_PIXEL = 80;
+
+      const GROUND_FEET_MSL = 0;
+      const JET_BAND_HALF_THICKNESS = 1400;
+      const JETSTREAM_ACTIVATION_MARGIN_FEET = 900;
+      const MAX_SMOKE_INVENTORY = 2;
+      const SEA_LEVEL_PRESSURE_MB = 1013.25;
+      const ISOLINE_SURFACE_PRESSURE_MB = 1013.5;
+      const JETSTREAM_PRESSURE_MB = 250;
+      const JETSTREAM_SLEW_RATE = 0.55;
+      const SPACE_FADE_START_FEET = 90000;
+      const BLACK_SKY_START_FEET = 110000;
+      const BALLOON_BURST_FEET = 200000;
+
+      const plane = {
+        xFeet: 0,
+        yFeetMSL: 8000,
+        vy: 0,
+        baseForwardSpeed: 1850,
+        forwardSpeed: 1850,
+        climbAccel: 22800,
+        drag: 0.945,
+        maxClimb: 11800,
+        maxDescent: -11800
+      };
+
+      const world = {
+        trees: [],
+        critters: [],
+        lowClouds: [],
+        boosterTowers: [],
+        nextClusterX: 0,
+        nextTowerXFeet: 0,
+        clusterSeed: 0,
+        stars: [],
+        biomeBands: []
+      };
+
+      const air = {
+        stepPx: 8,
+        offsetPx: 0,
+        tempCols: [],
+        currentTemp: -35,
+        targetTemp: -35,
+        segmentRemaining: 0
+      };
+
+      const smoke = {
+        canisters: [],
+        trail: [],
+        spawnTimer: 2.5,
+        inventory: 0,
+        boostTimer: 0,
+        nextActivationColorIndex: 0,
+        activePaletteIndex: 0,
+        grapple: {
+          state: "idle",
+          progress: 0,
+          startX: 0,
+          startFeet: 0,
+          endX: 0,
+          endFeet: 0,
+          hookX: 0,
+          hookFeet: 0,
+          targetTower: null,
+          hasPack: false,
+          cableLengthFeet: 0
+        }
+      };
+
+      const jetstreamState = {
+        targetDriverTempC: 0,
+        driverTempC: 0,
+        centerHeightFeet: 0
+      };
+
+
+      const BIOME_MIN_MILES = 50;
+      const BIOME_MAX_MILES = 100;
+      const BIOME_BLEND_MILES = 24;
+      const JETSTREAM_TEMP_AMPLIFICATION = 1.9;
+      const JETSTREAM_BASE_ALTITUDE_SHIFT_FEET = -6500;
+      const SMOKE_BOOST_SPEED_BONUS = 2200;
+      const GRAPPLE_MAX_REACH_FEET = 28000;
+      const GRAPPLE_HORIZONTAL_REACH_FEET = 9000;
+      const GRAPPLE_SNAG_X_FEET = 4200;
+      const GRAPPLE_SNAG_Y_FEET = 1800;
+      const GRAPPLE_EXTEND_SPEED_FPS = 28000;
+      const GRAPPLE_RAISE_SPEED_FPS = 12000;
+      const GRAPPLE_MIN_DRAG_ANGLE_DEG = 4;
+      const GRAPPLE_MAX_DRAG_ANGLE_DEG = 35;
+      const GRAPPLE_SPEED_FOR_MAX_DRAG = 9200;
+      const BOOSTER_TOWER_MIN_SPACING_FEET = 18000;
+      const BOOSTER_TOWER_MAX_SPACING_FEET = 36000;
+      const BIOMES = [
+        {
+          key: "temperate",
+          name: "Temperate Forest",
+          decorKinds: ["pine", "oak", "shrub"],
+          wildlifeKinds: ["deer", "fox", "owl"],
+          decorBias: 0.74,
+          spacingMin: 18,
+          spacingMax: 34,
+          baseTempC: -2,
+          surfaceType: "land",
+          surfaceAmpFeet: 700,
+          groundTop: [78, 126, 70],
+          groundBottom: [36, 78, 34],
+          waterTop: [78, 126, 70],
+          waterBottom: [36, 78, 34],
+          skyGround: [172, 102, 98],
+          skyWater: [172, 102, 98],
+          spriteColor: [232, 255, 232]
+        },
+        {
+          key: "tropical",
+          name: "Tropical Forest",
+          decorKinds: ["palm", "fern", "broadleaf"],
+          wildlifeKinds: ["parrot", "lizard", "monkey"],
+          decorBias: 0.76,
+          spacingMin: 18,
+          spacingMax: 30,
+          baseTempC: 13,
+          surfaceType: "land",
+          surfaceAmpFeet: 850,
+          groundTop: [66, 142, 82],
+          groundBottom: [20, 90, 48],
+          waterTop: [66, 142, 82],
+          waterBottom: [20, 90, 48],
+          skyGround: [194, 106, 92],
+          skyWater: [194, 106, 92],
+          spriteColor: [232, 255, 228]
+        },
+
+        {
+          key: "desert",
+          name: "Desert",
+          decorKinds: ["cactus", "rock", "mesa"],
+          wildlifeKinds: ["snake", "lizard", "scorpion"],
+          decorBias: 0.75,
+          spacingMin: 22,
+          spacingMax: 38,
+          baseTempC: 16,
+          surfaceType: "land",
+          surfaceAmpFeet: 900,
+          groundTop: [196, 162, 88],
+          groundBottom: [128, 94, 52],
+          waterTop: [196, 162, 88],
+          waterBottom: [128, 94, 52],
+          skyGround: [208, 116, 82],
+          skyWater: [208, 116, 82],
+          spriteColor: [255, 244, 210]
+        },
+        {
+          key: "tundra",
+          name: "Tundra",
+          decorKinds: ["spruce", "snowmound", "bare"],
+          wildlifeKinds: ["hare", "caribou", "owl"],
+          decorBias: 0.72,
+          spacingMin: 20,
+          spacingMax: 36,
+          baseTempC: -18,
+          surfaceType: "land",
+          surfaceAmpFeet: 950,
+          groundTop: [246, 248, 252],
+          groundBottom: [198, 214, 228],
+          waterTop: [246, 248, 252],
+          waterBottom: [198, 214, 228],
+          skyGround: [142, 118, 154],
+          skyWater: [142, 118, 154],
+          spriteColor: [255, 255, 255]
+        },
+        {
+          key: "grassland",
+          name: "Grassland",
+          decorKinds: ["tuft", "flower", "hay"],
+          wildlifeKinds: ["bison", "rabbit", "hawk"],
+          decorBias: 0.72,
+          spacingMin: 18,
+          spacingMax: 34,
+          baseTempC: 7,
+          surfaceType: "land",
+          surfaceAmpFeet: 800,
+          groundTop: [144, 170, 78],
+          groundBottom: [78, 110, 42],
+          waterTop: [144, 170, 78],
+          waterBottom: [78, 110, 42],
+          skyGround: [184, 110, 92],
+          skyWater: [184, 110, 92],
+          spriteColor: [244, 255, 220]
+        },
+        {
+          key: "badlands",
+          name: "Badlands",
+          decorKinds: ["spike", "butte", "stone"],
+          wildlifeKinds: ["coyote", "vulture", "lizard"],
+          decorBias: 0.7,
+          spacingMin: 22,
+          spacingMax: 40,
+          baseTempC: 9,
+          surfaceType: "land",
+          surfaceAmpFeet: 850,
+          groundTop: [204, 164, 118],
+          groundBottom: [148, 102, 70],
+          waterTop: [204, 164, 118],
+          waterBottom: [148, 102, 70],
+          skyGround: [188, 114, 96],
+          skyWater: [188, 114, 96],
+          spriteColor: [255, 235, 205]
+        },
+        {
+          key: "coldOcean",
+          name: "Cold Ocean",
+          decorKinds: ["wave", "berg", "foam"],
+          wildlifeKinds: ["fish", "loon", "gull"],
+          decorBias: 0.79,
+          spacingMin: 18,
+          spacingMax: 30,
+          baseTempC: -10,
+          surfaceType: "oceanCold",
+          surfaceAmpFeet: 3200,
+          groundTop: [182, 212, 226],
+          groundBottom: [116, 154, 182],
+          waterTop: [102, 162, 214],
+          waterBottom: [30, 86, 144],
+          skyGround: [124, 126, 170],
+          skyWater: [88, 126, 196],
+          spriteColor: [236, 248, 255]
+        },
+        {
+          key: "warmOcean",
+          name: "Warm Ocean",
+          decorKinds: ["wave", "reef", "foam"],
+          wildlifeKinds: ["fish", "gull", "parrot"],
+          decorBias: 0.79,
+          spacingMin: 18,
+          spacingMax: 30,
+          baseTempC: 11,
+          surfaceType: "oceanWarm",
+          surfaceAmpFeet: 3000,
+          groundTop: [122, 192, 170],
+          groundBottom: [54, 126, 122],
+          waterTop: [76, 172, 196],
+          waterBottom: [18, 108, 144],
+          skyGround: [170, 118, 138],
+          skyWater: [148, 122, 154],
+          spriteColor: [224, 255, 248]
+        }
+      ];
+
+      const BIOME_BASE_TEMP_MIN_C = Math.min(...BIOMES.map(b => b.baseTempC));
+      const BIOME_BASE_TEMP_MAX_C = Math.max(...BIOMES.map(b => b.baseTempC));
+      const BIOME_BY_KEY = Object.fromEntries(BIOMES.map(b => [b.key, b]));
+
+      const RANDOM_BIOME_KEYS = ["grassland", "badlands", "desert", "tundra", "coldOcean", "warmOcean", "tropical"];
+      let presetBiomeRoute = [];
+
+      function randomChoice(list) {
+        return list[Math.floor(Math.random() * list.length)];
+      }
+
+      function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function buildRandomBiomeRoute() {
+        const route = [["temperate", randomInt(90, 130)]];
+        let totalMiles = route[0][1];
+        let lastKey = "temperate";
+
+        while (totalMiles < ROUTE_MILES - 140) {
+          const choices = RANDOM_BIOME_KEYS.filter(key => key !== lastKey);
+          const nextKey = randomChoice(choices);
+          const nextSpan = randomInt(55, 115);
+          route.push([nextKey, nextSpan]);
+          totalMiles += nextSpan;
+          lastKey = nextKey;
+        }
+
+        const finalSpan = Math.max(90, ROUTE_MILES - totalMiles);
+        route.push(["temperate", finalSpan]);
+        return route;
+      }
+
+      function initBiomeBands() {
+        presetBiomeRoute = buildRandomBiomeRoute();
+        world.biomeBands = [];
+        let start = 0;
+        for (const [key, spanMiles] of presetBiomeRoute) {
+          const biome = getBiomeByKey(key);
+          const end = start + spanMiles;
+          world.biomeBands.push({ startMile: start, endMile: end, biome });
+          start = end;
+        }
+        while (start < ROUTE_MILES + 300) {
+          const biome = getBiomeByKey("temperate");
+          const end = start + 75;
+          world.biomeBands.push({ startMile: start, endMile: end, biome });
+          start = end;
+        }
+      }
+
+      function getBiomeBandAtRouteFeet(routeFeet) {
+        if (!world.biomeBands.length) initBiomeBands();
+        const mile = Math.max(0, routeFeet / FEET_PER_MILE);
+        for (const band of world.biomeBands) {
+          if (mile >= band.startMile && mile < band.endMile) return band;
+        }
+        return world.biomeBands[world.biomeBands.length - 1];
+      }
+
+      function currentBiomeBand() {
+        return getBiomeBandAtRouteFeet(tripProgressFeet());
+      }
+
+      let score = 0;
+      let timeElapsed = 0;
+      let lastTime = performance.now();
+      let sunAngle = 0;
+      let balloonBurst = false;
+      let burstTimer = 0;
+      let burstPieces = [];
+
+      const audioState = {
+        jetstreamTriggered: false,
+        endTriggered: false,
+        victoryTriggered: false,
+        queue: [],
+        current: null,
+        smokeClips: [],
+        primed: false,
+        selectedLoopTrackKey: null
+      };
+
+      const audioSettings = {
+        musicMuted: false,
+        soundsMuted: false
+      };
+
+      function makeAudio(name, loop = false) {
+        const a = new Audio(name);
+        a.preload = "auto";
+        a.loop = loop;
+        return a;
+      }
+
+      const audio = {
+        engage: makeAudio("engage.mp3"),
+        intro: makeAudio("Intro.mp3"),
+        main: makeAudio("Main.mp3", true),
+        cruise: makeAudio("cruise.mp3", true),
+        cruise2: makeAudio("cruise2.mp3", true),
+        end: makeAudio("End.mp3"),
+        victory: makeAudio("victory.mp3"),
+        victory2: makeAudio("victory2.mp3")
+      };
+
+      audio.cruise.volume = 0.65;
+      audio.cruise2.volume = 0.65;
+      audio.main.volume = 0.65;
+
+      const smokeSfxTemplate = makeAudio("smoke.mp3");
+
+      function syncAudioMuteStates() {
+        for (const clip of Object.values(audio)) {
+          clip.muted = audioSettings.musicMuted;
+        }
+        for (const clip of audioState.smokeClips) {
+          clip.muted = audioSettings.soundsMuted;
+        }
+        musicToggle.textContent = `Music: ${audioSettings.musicMuted ? "Off" : "On"}`;
+        soundToggle.textContent = `Sounds: ${audioSettings.soundsMuted ? "Off" : "On"}`;
+      }
+
+      function stopAllAudio() {
+        for (const clip of Object.values(audio)) {
+          clip.pause();
+          clip.currentTime = 0;
+        }
+        for (const clip of audioState.smokeClips) {
+          clip.pause();
+          clip.currentTime = 0;
+        }
+        audioState.smokeClips = [];
+        audioState.queue = [];
+        audioState.current = null;
+        audioState.selectedLoopTrackKey = null;
+      }
+
+      function primeClip(clip) {
+        if (!clip) return;
+        const previousMuted = clip.muted;
+        clip.muted = true;
+        clip.currentTime = 0;
+        const playPromise = clip.play();
+        if (playPromise && typeof playPromise.then === "function") {
+          playPromise.then(() => {
+            clip.pause();
+            clip.currentTime = 0;
+            clip.muted = previousMuted || audioSettings.musicMuted;
+          }).catch(() => {
+            clip.muted = previousMuted || audioSettings.musicMuted;
+          });
+        } else {
+          try {
+            clip.pause();
+            clip.currentTime = 0;
+          } catch (e) { }
+          clip.muted = previousMuted || audioSettings.musicMuted;
+        }
+      }
+
+      function primeAudioClips() {
+        if (audioState.primed) return;
+        audioState.primed = true;
+        for (const clip of Object.values(audio)) {
+          try {
+            clip.load();
+          } catch (e) { }
+        }
+        primeClip(audio.end);
+        primeClip(audio.victory);
+        primeClip(audio.victory2);
+      }
+
+      function playQueuedAudio(list) {
+        if (!list.length) return;
+        audioState.queue = list.slice();
+        if (!audioState.current) playNextQueuedAudio();
+      }
+
+      function playNextQueuedAudio() {
+        if (!audioState.queue.length) {
+          audioState.current = null;
+          return;
+        }
+
+        const clip = audioState.queue.shift();
+        audioState.current = clip;
+        clip.currentTime = 0;
+        clip.muted = audioSettings.musicMuted;
+
+        const onEnded = () => {
+          if (audioState.current === clip) {
+            audioState.current = null;
+          }
+          playNextQueuedAudio();
+        };
+
+        clip.addEventListener("ended", onEnded, { once: true });
+
+        const playPromise = clip.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => {
+            if (audioState.current === clip) {
+              audioState.current = null;
+            }
+            playNextQueuedAudio();
+          });
+        }
+      }
+
+      function chooseCruiseLoopTrack() {
+        const options = [
+          { key: "main", clip: audio.main },
+          { key: "cruise", clip: audio.cruise },
+          { key: "cruise2", clip: audio.cruise2 }
+        ];
+        const chosen = options[Math.floor(Math.random() * options.length)];
+        audioState.selectedLoopTrackKey = chosen.key;
+        return chosen.clip;
+      }
+
+      function triggerJetstreamAudioSequence() {
+        if (audioState.jetstreamTriggered) return;
+        audioState.jetstreamTriggered = true;
+        const chosenLoop = chooseCruiseLoopTrack();
+        if (audioState.selectedLoopTrackKey === "main") {
+          playQueuedAudio([audio.engage, audio.intro, chosenLoop]);
+        } else {
+          playQueuedAudio([audio.engage, chosenLoop]);
+        }
+      }
+
+      function triggerEndAudio() {
+        if (audioState.selectedLoopTrackKey === "cruise" || audioState.selectedLoopTrackKey === "cruise2") return;
+        if (audioState.endTriggered) return;
+        audioState.endTriggered = true;
+        audioState.queue = [];
+        if (audioState.current) {
+          try {
+            audioState.current.pause();
+          } catch (e) { }
+          audioState.current = null;
+        }
+        audio.main.pause();
+        audio.cruise.pause();
+        audio.cruise2.pause();
+        audio.intro.pause();
+        audio.engage.pause();
+        audio.end.currentTime = 0;
+        audio.end.muted = audioSettings.musicMuted;
+        const playPromise = audio.end.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => { });
+        }
+      }
+
+      function triggerVictoryAudio() {
+        if (audioState.victoryTriggered) return;
+        audioState.victoryTriggered = true;
+        stopAllAudio();
+        const victoryClip = Math.random() < 0.5 ? audio.victory : audio.victory2;
+        victoryClip.muted = audioSettings.musicMuted;
+        const playPromise = victoryClip.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => { });
+        }
+      }
+
+      function playSmokeSfx() {
+        const clip = smokeSfxTemplate.cloneNode();
+        clip.currentTime = 0;
+        clip.muted = audioSettings.soundsMuted;
+        audioState.smokeClips.push(clip);
+
+        const cleanup = () => {
+          const idx = audioState.smokeClips.indexOf(clip);
+          if (idx >= 0) audioState.smokeClips.splice(idx, 1);
+        };
+
+        clip.addEventListener("ended", cleanup, { once: true });
+        clip.addEventListener("error", cleanup, { once: true });
+
+        const playPromise = clip.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => {
+            cleanup();
+          });
+        }
+      }
+
+      function planeScreenX() {
+        return Math.floor(canvas.width * PLANE_X_FRAC);
+      }
+
+      function planeScreenY() {
+        return Math.floor(canvas.height * PLANE_Y_FRAC);
+      }
+
+      function screenYFromFeet(feetMSL) {
+        return planeScreenY() - (feetMSL - plane.yFeetMSL) / SCREEN_FT_PER_PIXEL;
+      }
+
+      function worldXToScreenX(worldFeet) {
+        return planeScreenX() + (worldFeet - plane.xFeet) / SCREEN_FT_PER_PIXEL;
+      }
+
+      function tripProgressFeet() {
+        return plane.xFeet * TRIP_PROGRESS_SCALE;
+      }
+
+      function spaceFadeAlpha() {
+        return clamp((plane.yFeetMSL - SPACE_FADE_START_FEET) / (BALLOON_BURST_FEET - SPACE_FADE_START_FEET), 0, 1);
+      }
+
+      function initStars() {
+        world.stars = [];
+        const count = Math.max(80, Math.floor((canvas.width * canvas.height) / 9000));
+        for (let i = 0; i < count; i++) {
+          world.stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height * 0.78,
+            size: Math.random() < 0.82 ? 1 : 2,
+            twinkle: Math.random() * Math.PI * 2
+          });
+        }
+      }
+
+      function burstBalloon() {
+        if (balloonBurst) return;
+        balloonBurst = true;
+        burstTimer = 1.8;
+        burstPieces = [];
+        const px = planeScreenX() + 18;
+        const py = planeScreenY() - 30;
+        for (let i = 0; i < 16; i++) {
+          const a = (Math.PI * 2 * i) / 16 + Math.random() * 0.18;
+          const speed = 80 + Math.random() * 180;
+          burstPieces.push({
+            x: px,
+            y: py,
+            vx: Math.cos(a) * speed,
+            vy: Math.sin(a) * speed - 40,
+            life: 0.8 + Math.random() * 0.8,
+            maxLife: 0.8 + Math.random() * 0.8
+          });
+        }
+        plane.vy = Math.min(plane.vy, -22000);
+      }
+
+      function routeFeetAtScreenX(screenX) {
+        return Math.max(0, tripProgressFeet() + (screenX - planeScreenX()) * SCREEN_FT_PER_PIXEL);
+      }
+
+      function getBiomeBandIndexAtRouteFeet(routeFeet) {
+        if (!world.biomeBands.length) initBiomeBands();
+        const mile = Math.max(0, routeFeet / FEET_PER_MILE);
+        for (let i = 0; i < world.biomeBands.length; i++) {
+          const band = world.biomeBands[i];
+          if (mile >= band.startMile && mile < band.endMile) return i;
+        }
+        return Math.max(0, world.biomeBands.length - 1);
+      }
+
+      function getBiomeBlendInfoAtRouteFeet(routeFeet) {
+        const mile = Math.max(0, routeFeet / FEET_PER_MILE);
+        const idx = getBiomeBandIndexAtRouteFeet(routeFeet);
+        const band = world.biomeBands[idx];
+        const blendMiles = BIOME_BLEND_MILES;
+
+        if (idx > 0 && mile < band.startMile + blendMiles) {
+          const prev = world.biomeBands[idx - 1];
+          const t = clamp((mile - (band.startMile - blendMiles)) / (blendMiles * 2), 0, 1);
+          return { primaryBiome: prev.biome, secondaryBiome: band.biome, mix: t, band };
+        }
+
+        if (idx < world.biomeBands.length - 1 && mile > band.endMile - blendMiles) {
+          const next = world.biomeBands[idx + 1];
+          const t = clamp((mile - (band.endMile - blendMiles)) / (blendMiles * 2), 0, 1);
+          return { primaryBiome: band.biome, secondaryBiome: next.biome, mix: t, band };
+        }
+
+        return { primaryBiome: band.biome, secondaryBiome: null, mix: 0, band };
+      }
+
+      function pseudo01(n) {
+        const v = Math.sin(n * 12.9898 + 78.233) * 43758.5453123;
+        return v - Math.floor(v);
+      }
+
+      function chooseBiomeForRouteFeet(routeFeet, salt = 0) {
+        const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
+        if (!info.secondaryBiome) return info.primaryBiome;
+        return pseudo01(routeFeet * 0.000013 + salt * 0.173) < info.mix
+          ? info.secondaryBiome
+          : info.primaryBiome;
+      }
+
+      function getBlendedBiomeBaseTempAtRouteFeet(routeFeet) {
+        const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
+        if (!info.secondaryBiome) return info.primaryBiome.baseTempC;
+        return lerp(info.primaryBiome.baseTempC, info.secondaryBiome.baseTempC, info.mix);
+      }
+
+      function getBiomeByKey(key) {
+        return BIOME_BY_KEY[key] || BIOMES[0];
+      }
+
+      function getBlendedBiomeColorAtRouteFeet(routeFeet, prop) {
+        const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
+        const a = info.primaryBiome[prop];
+        if (!info.secondaryBiome) return a;
+        return mixColor(a, info.secondaryBiome[prop], info.mix);
+      }
+
+      function getBlockBlendInfo(routeFeet, blockFeet, blendFeet, seed, threshold = 0.5) {
+        const index = Math.floor(routeFeet / blockFeet);
+        const start = index * blockFeet;
+        const end = start + blockFeet;
+        const current = pseudo01(index * 0.61803398875 + seed) < threshold ? 0 : 1;
+        if (blendFeet > 0 && routeFeet - start < blendFeet) {
+          const prev = pseudo01((index - 1) * 0.61803398875 + seed) < threshold ? 0 : 1;
+          const t = smoothstep(0, blendFeet, routeFeet - start);
+          return { primary: prev, secondary: current, mix: t };
+        }
+        if (blendFeet > 0 && end - routeFeet < blendFeet) {
+          const next = pseudo01((index + 1) * 0.61803398875 + seed) < threshold ? 0 : 1;
+          const t = smoothstep(0, blendFeet, blendFeet - (end - routeFeet));
+          return { primary: current, secondary: next, mix: t };
+        }
+        return { primary: current, secondary: current, mix: 0 };
+      }
+
+      function getBinaryBlockValue(routeFeet, blockFeet, blendFeet, seed, threshold = 0.5) {
+        const info = getBlockBlendInfo(routeFeet, blockFeet, blendFeet, seed, threshold);
+        return lerp(info.primary, info.secondary, info.mix);
+      }
+
+      function getSurfaceStateForBiome(routeFeet, biome) {
+        const seed = biome.baseTempC * 0.137 + biome.key.length * 0.91;
+
+        if (biome.surfaceType === "oceanCold") {
+          const waterWeight = clamp(0.8 + 0.2 * getBinaryBlockValue(routeFeet, 160000, 52000, 3.91, 0.32), 0, 1);
+          const tremolo = 0.34 * Math.sin(routeFeet / 62000 + 0.7) + 0.12 * Math.sin(routeFeet / 22000 + 2.2);
+          return { waterWeight, tremolo, ampFeet: biome.surfaceAmpFeet * 0.52 };
+        }
+
+        if (biome.surfaceType === "oceanWarm") {
+          const waterWeight = clamp(0.82 + 0.18 * getBinaryBlockValue(routeFeet, 168000, 56000, 4.63, 0.34), 0, 1);
+          const tremolo = 0.32 * Math.sin(routeFeet / 58000 + 1.1) + 0.11 * Math.sin(routeFeet / 21000 + 0.2);
+          return { waterWeight, tremolo, ampFeet: biome.surfaceAmpFeet * 0.5 };
+        }
+
+        const tremolo = 0.22 * Math.sin(routeFeet / 64000 + seed) + 0.12 * Math.sin(routeFeet / 24000 + seed * 1.7);
+        return { waterWeight: 0.5, tremolo, ampFeet: biome.surfaceAmpFeet || 700 };
+      }
+
+      function mixSurfaceState(a, b, t) {
+        return {
+          waterWeight: lerp(a.waterWeight, b.waterWeight, t),
+          tremolo: lerp(a.tremolo, b.tremolo, t),
+          ampFeet: lerp(a.ampFeet, b.ampFeet, t)
+        };
+      }
+
+      function getSurfaceStateAtRouteFeet(routeFeet) {
+        const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
+        const a = getSurfaceStateForBiome(routeFeet, info.primaryBiome);
+        if (!info.secondaryBiome) return a;
+        const b = getSurfaceStateForBiome(routeFeet, info.secondaryBiome);
+        return mixSurfaceState(a, b, info.mix);
+      }
+
+      function getGroundPaletteForBiomeRoute(routeFeet, biome) {
+        const surface = getSurfaceStateForBiome(routeFeet, biome);
+        return {
+          top: mixColor(biome.groundTop, biome.waterTop || biome.groundTop, surface.waterWeight),
+          bottom: mixColor(biome.groundBottom, biome.waterBottom || biome.groundBottom, surface.waterWeight),
+          skyGround: mixColor(biome.skyGround, biome.skyWater || biome.skyGround, surface.waterWeight),
+          surface
+        };
+      }
+
+      function getGroundPaletteAtRouteFeet(routeFeet) {
+        const info = getBiomeBlendInfoAtRouteFeet(routeFeet);
+        const a = getGroundPaletteForBiomeRoute(routeFeet, info.primaryBiome);
+        if (!info.secondaryBiome) return a;
+        const b = getGroundPaletteForBiomeRoute(routeFeet, info.secondaryBiome);
+        return {
+          top: mixColor(a.top, b.top, info.mix),
+          bottom: mixColor(a.bottom, b.bottom, info.mix),
+          skyGround: mixColor(a.skyGround, b.skyGround, info.mix),
+          surface: mixSurfaceState(a.surface, b.surface, info.mix)
+        };
+      }
+
+      function getGroundPaletteAtScreenX(screenX) {
+        return getGroundPaletteAtRouteFeet(routeFeetAtScreenX(screenX));
+      }
+
+      function getAirBottomColorAtScreenX(screenX) {
+        const tempC = getTempAtScreenX(screenX);
+        const warmNorm = warmNormFromTemp(tempC);
+        return mixColor([120, 138, 196], [222, 150, 126], warmNorm);
+      }
+
+      function getSpriteColorForBiomeKey(key) {
+        return getBiomeByKey(key).spriteColor || [255, 255, 255];
+      }
+
+      function getJetstreamSurfaceOffsetFeetAtScreenX(screenX) {
+        const routeFeet = routeFeetAtScreenX(screenX);
+        const surface = getGroundPaletteAtRouteFeet(routeFeet).surface;
+        const waterSignal = (surface.waterWeight - 0.5) * 2;
+        const smoothedSignal = waterSignal * 0.42 + surface.tremolo * 0.34;
+        return smoothedSignal * surface.ampFeet;
+      }
+
+      function getBiomeAtScreenX(screenX) {
+        return chooseBiomeForRouteFeet(routeFeetAtScreenX(screenX), screenX);
+      }
+
+      function getBiomeBaseTempAtScreenX(screenX) {
+        return getBlendedBiomeBaseTempAtRouteFeet(routeFeetAtScreenX(screenX));
+      }
+
+      function biomeWarmNorm(baseTempC) {
+        return clamp((baseTempC - BIOME_BASE_TEMP_MIN_C) / (BIOME_BASE_TEMP_MAX_C - BIOME_BASE_TEMP_MIN_C), 0, 1);
+      }
+
+      function nextAirTemp() {
+        if (air.segmentRemaining <= 0) {
+          air.segmentRemaining = Math.floor(8 + Math.random() * 18);
+
+          let nextTarget = air.currentTemp + (-2.8 + Math.random() * 5.6);
+          if (Math.random() < 0.22) nextTarget += -3 + Math.random() * 6;
+
+          air.targetTemp = clamp(nextTarget, -8, 8);
+        }
+
+        air.segmentRemaining--;
+
+        const diff = air.targetTemp - air.currentTemp;
+        air.currentTemp += clamp(diff, -0.55, 0.55);
+
+        if (Math.random() < 0.18) {
+          air.currentTemp += Math.random() < 0.5 ? -0.25 : 0.25;
+        }
+
+        air.currentTemp = clamp(air.currentTemp, -8, 8);
+        return air.currentTemp;
+      }
+
+      function initAir() {
+        air.tempCols = [];
+        air.offsetPx = 0;
+        air.currentTemp = 0;
+        air.targetTemp = 0;
+        air.segmentRemaining = 0;
+
+        const count = Math.ceil(canvas.width / air.stepPx) + 30;
+        for (let i = 0; i < count; i++) {
+          air.tempCols.push(nextAirTemp());
+        }
+      }
+
+      function updateAir(dt) {
+        const pxPerSec = plane.forwardSpeed / 10;
+        air.offsetPx += pxPerSec * dt;
+
+        while (air.offsetPx >= air.stepPx) {
+          air.offsetPx -= air.stepPx;
+          air.tempCols.shift();
+          air.tempCols.push(nextAirTemp());
+        }
+      }
+
+      function getAirAnomalyAtScreenX(screenX) {
+        const idxFloat = (screenX + air.offsetPx) / air.stepPx;
+        const i0 = Math.floor(idxFloat);
+        const i1 = Math.min(i0 + 1, air.tempCols.length - 1);
+        const t = idxFloat - i0;
+
+        const a = air.tempCols[clamp(i0, 0, air.tempCols.length - 1)];
+        const b = air.tempCols[clamp(i1, 0, air.tempCols.length - 1)];
+        return a + (b - a) * t;
+      }
+
+      function getTempAtScreenX(screenX) {
+        return getBiomeBaseTempAtScreenX(screenX) + getAirAnomalyAtScreenX(screenX);
+      }
+
+      function getJetstreamDriverTempAtScreenX(screenX) {
+        const blendedBase = getBiomeBaseTempAtScreenX(screenX);
+        const anomaly = getAirAnomalyAtScreenX(screenX);
+        return blendedBase * JETSTREAM_TEMP_AMPLIFICATION + anomaly * 1.08;
+      }
+
+      function localTemperatureC() {
+        return getTempAtScreenX(planeScreenX());
+      }
+
+      function warmNormFromTemp(tempC) {
+        return clamp((tempC + 65) / 85, 0, 1);
+      }
+
+      function scaleHeightFeetFromTemp(tempC) {
+        return lerp(22000, 31000, warmNormFromTemp(tempC));
+      }
+
+      function pressureAtAltitudeMb(altFeet, tempC) {
+        const H = scaleHeightFeetFromTemp(tempC);
+        return SEA_LEVEL_PRESSURE_MB * Math.exp(-Math.max(0, altFeet) / H);
+      }
+
+      function altitudeForPressureMb(pressureMb, tempC) {
+        const H = scaleHeightFeetFromTemp(tempC);
+        return -H * Math.log(pressureMb / SEA_LEVEL_PRESSURE_MB);
+      }
+
+      function getPressureScaleHeightFeetFromJetstreamCenter(centerHeightFeet) {
+        const safeCenter = Math.max(1000, centerHeightFeet);
+        return safeCenter / Math.log(SEA_LEVEL_PRESSURE_MB / JETSTREAM_PRESSURE_MB);
+      }
+
+      function getPressureFieldMbAt(screenX, altFeet) {
+        const centerHeightFeet = getWarmBoundaryFeetAtScreenX(screenX);
+        const H = getPressureScaleHeightFeetFromJetstreamCenter(centerHeightFeet);
+        return clamp(SEA_LEVEL_PRESSURE_MB * Math.exp(-Math.max(0, altFeet) / H), 0, 1055);
+      }
+
+      function getPressureScaleHeightFeetAtScreenX(screenX) {
+        return getPressureScaleHeightFeetFromJetstreamCenter(getWarmBoundaryFeetAtScreenX(screenX));
+      }
+
+      function getAltitudeFeetForPressureAtScreenX(screenX, pressureMb, surfacePressureMb = ISOLINE_SURFACE_PRESSURE_MB) {
+        const H = getPressureScaleHeightFeetAtScreenX(screenX);
+        const safePressure = clamp(pressureMb, 1, surfacePressureMb - 0.001);
+        return -H * Math.log(safePressure / surfacePressureMb);
+      }
+
+      function getRawJetstreamDriverTempAtScreenX(screenX) {
+        const offsets = [-56, -40, -24, -8, 8, 24, 40, 56];
+        let total = 0;
+        let weightTotal = 0;
+        for (const off of offsets) {
+          const weight = Math.abs(off) <= 8 ? 3 : (Math.abs(off) <= 24 ? 2 : 1);
+          total += getJetstreamDriverTempAtScreenX(screenX + off) * weight;
+          weightTotal += weight;
+        }
+        return total / weightTotal;
+      }
+
+      function getPressureConsistentJetstreamBoundaryFeetAtScreenX(screenX, driverTempC) {
+        return altitudeForPressureMb(JETSTREAM_PRESSURE_MB, driverTempC);
+      }
+
+      function initializeJetstreamState() {
+        const driverTempC = getRawJetstreamDriverTempAtScreenX(planeScreenX());
+        jetstreamState.targetDriverTempC = driverTempC;
+        jetstreamState.driverTempC = driverTempC;
+        jetstreamState.centerHeightFeet = getPressureConsistentJetstreamBoundaryFeetAtScreenX(planeScreenX(), driverTempC);
+      }
+
+      function updateJetstreamState(dt) {
+        const driverTempC = getRawJetstreamDriverTempAtScreenX(planeScreenX());
+        jetstreamState.targetDriverTempC = driverTempC;
+        const slew = 1 - Math.exp(-JETSTREAM_SLEW_RATE * 60 * dt);
+        jetstreamState.driverTempC = lerp(jetstreamState.driverTempC, driverTempC, clamp(slew, 0, 1));
+        jetstreamState.centerHeightFeet = getPressureConsistentJetstreamBoundaryFeetAtScreenX(planeScreenX(), jetstreamState.driverTempC);
+      }
+
+      function getSmoothedTempAtScreenX(screenX) {
+        const offsets = [-48, -32, -16, 0, 16, 32, 48];
+        let total = 0;
+        let weightTotal = 0;
+        for (const off of offsets) {
+          const weight = off === 0 ? 3 : (Math.abs(off) === 16 ? 2 : 1);
+          total += getTempAtScreenX(screenX + off) * weight;
+          weightTotal += weight;
+        }
+        return total / weightTotal;
+      }
+
+      function getWarmBoundaryFeetAtScreenX(screenX) {
+        const localRawDriver = getRawJetstreamDriverTempAtScreenX(screenX);
+        const localAdjustedDriver = localRawDriver + (jetstreamState.driverTempC - jetstreamState.targetDriverTempC);
+        return getPressureConsistentJetstreamBoundaryFeetAtScreenX(screenX, localAdjustedDriver);
+      }
+
+      function getWarmBoundaryScreenYAtScreenX(screenX) {
+        return screenYFromFeet(getWarmBoundaryFeetAtScreenX(screenX));
+      }
+
+      function getTropopauseBandCenterAtScreenX(screenX) {
+        return getWarmBoundaryFeetAtScreenX(screenX);
+      }
+
+      function getTropopauseBandCenterHere() {
+        return getTropopauseBandCenterAtScreenX(planeScreenX());
+      }
+
+      function getBarometerMb() {
+        return getPressureFieldMbAt(planeScreenX(), plane.yFeetMSL);
+      }
+
+      function inJetstreamBand() {
+        const bandCenter = getTropopauseBandCenterHere();
+        const bandTop = bandCenter + JET_BAND_HALF_THICKNESS + JETSTREAM_ACTIVATION_MARGIN_FEET;
+        const bandBottom = bandCenter - JET_BAND_HALF_THICKNESS - JETSTREAM_ACTIVATION_MARGIN_FEET;
+        const balloon = getBalloonBoundsFeet();
+        return !(balloon.topFeet < bandBottom || balloon.bottomFeet > bandTop);
+      }
+
+      function milesRemaining() {
+        return Math.max(0, Math.ceil((ROUTE_FEET - tripProgressFeet()) / FEET_PER_MILE));
+      }
+
+      function makeTree(x, idx, biome) {
+        const sizeBias = 0.9 + Math.random() * 0.55;
+        return {
+          x,
+          biomeKey: biome.key,
+          biomeName: biome.name,
+          kind: randomChoice(biome.decorKinds),
+          h: Math.round((14 + ((idx * 17) % 5) * 6) * sizeBias),
+          lean: ((idx % 5) - 2) * 0.35,
+          width: 8 + (idx % 4) * 2,
+          bob: Math.random() * Math.PI * 2
+        };
+      }
+
+      function makeCritter(x, idx, biome) {
+        return {
+          x,
+          biomeKey: biome.key,
+          biomeName: biome.name,
+          kind: randomChoice(biome.wildlifeKinds),
+          size: 6 + (idx % 3),
+          bob: (idx % 7) * 0.7
+        };
+      }
+
+      function spawnGroundCluster(xStart) {
+        const items = 4 + Math.floor(Math.random() * 8);
+        let x = xStart;
+        for (let i = 0; i < items; i++) {
+          const idx = world.clusterSeed++;
+          const routeFeetAtItem = tripProgressFeet() + Math.max(0, x) * SCREEN_FT_PER_PIXEL;
+          const biome = chooseBiomeForRouteFeet(routeFeetAtItem, idx + x * 0.01);
+          if (Math.random() < biome.decorBias) {
+            world.trees.push(makeTree(x, idx, biome));
+          } else {
+            world.critters.push(makeCritter(x + Math.floor(Math.random() * 10), idx, biome));
+          }
+          x += biome.spacingMin + Math.random() * (biome.spacingMax - biome.spacingMin);
+        }
+        world.nextClusterX = x + 120 + Math.random() * 320;
+      }
+
+      function initTrees() {
+        if (!world.biomeBands.length) initBiomeBands();
+        world.trees = [];
+        world.critters = [];
+        world.clusterSeed = 0;
+        world.nextClusterX = 20;
+        while (world.nextClusterX < canvas.width + 260) {
+          spawnGroundCluster(world.nextClusterX);
+        }
+      }
+
+      function spawnLowCloud(xStart = null) {
+        const x = xStart ?? (canvas.width + Math.random() * 120);
+        return {
+          x,
+          y: 0.72 + Math.random() * 0.12,
+          w: 24 + Math.floor(Math.random() * 34),
+          h: 8 + Math.floor(Math.random() * 10)
+        };
+      }
+
+      function initLowClouds() {
+        world.lowClouds = [];
+        const count = 20;
+        for (let i = 0; i < count; i++) {
+          world.lowClouds.push(spawnLowCloud(i * 70));
+        }
+      }
+
+      function updateTrees(dt) {
+        const pxPerSec = plane.forwardSpeed / 10;
+        for (const tree of world.trees) tree.x -= pxPerSec * dt;
+        for (const critter of world.critters) critter.x -= pxPerSec * dt;
+
+        world.nextClusterX -= pxPerSec * dt;
+        world.trees = world.trees.filter(tree => tree.x > -40);
+        world.critters = world.critters.filter(critter => critter.x > -50);
+
+        while (world.nextClusterX < canvas.width + 220) {
+          spawnGroundCluster(world.nextClusterX);
+        }
+      }
+
+      function updateLowClouds(dt) {
+        const temp = localTemperatureC();
+        const warmNorm = clamp((temp + 60) / 70, 0, 1);
+        const pxPerSec = plane.forwardSpeed / 10;
+
+        for (const c of world.lowClouds) c.x -= pxPerSec * dt;
+
+        while (world.lowClouds.length && world.lowClouds[0].x + world.lowClouds[0].w < -40) {
+          world.lowClouds.shift();
+        }
+
+        const desiredCount = 8 + Math.floor(warmNorm * 20);
+        while (world.lowClouds.length < desiredCount) {
+          world.lowClouds.push(spawnLowCloud());
+        }
+      }
+
+      function spawnBoosterTower(worldX = null) {
+        const towerX = worldX ?? (plane.xFeet + canvas.width * SCREEN_FT_PER_PIXEL + 6000 + Math.random() * 14000);
+        const topFeet = 7000 + Math.random() * 11000;
+        world.boosterTowers.push({
+          worldX: towerX,
+          topFeet,
+          hasBooster: true,
+          collected: false
         });
       }
-    }
 
-    const nextTrail = [];
-    for (const p of smoke.trail) {
-      p.life -= dt;
-      if (p.life <= 0) continue;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vx *= 0.985;
-      p.vy *= 0.985;
-      nextTrail.push(p);
-    }
-    smoke.trail = nextTrail;
-  }
-
-  function drawBoosterPack(x, y, mirror = false) {
-    const dir = mirror ? -1 : 1;
-    ctx.strokeRect(x - 5, y - 8, 10, 14);
-    ctx.beginPath();
-    ctx.moveTo(x - 2 * dir, y - 8);
-    ctx.lineTo(x, y - 13);
-    ctx.lineTo(x + 2 * dir, y - 9);
-    ctx.moveTo(x + 5 * dir, y - 2);
-    ctx.lineTo(x + 10 * dir, y - 2);
-    ctx.stroke();
-  }
-
-  function drawBoosterTowers() {
-    const groundY = screenYFromFeet(GROUND_FEET_MSL);
-    ctx.strokeStyle = "#FFF";
-    ctx.lineWidth = 2;
-
-    for (const tower of world.boosterTowers) {
-      const x = Math.floor(worldXToScreenX(tower.worldX));
-      const topY = Math.floor(screenYFromFeet(tower.topFeet));
-      if (x < -30 || x > canvas.width + 30) continue;
-
-      ctx.beginPath();
-      ctx.moveTo(x, groundY);
-      ctx.lineTo(x, topY);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(x - 6, groundY);
-      ctx.lineTo(x, topY);
-      ctx.lineTo(x + 6, groundY);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(x - 9, topY + 3);
-      ctx.lineTo(x + 9, topY + 3);
-      ctx.stroke();
-
-      if (tower.hasBooster) {
-        drawBoosterPack(x, topY - 10, false);
+      function initBoosterTowers() {
+        world.boosterTowers = [];
+        world.nextTowerXFeet = plane.xFeet + canvas.width * SCREEN_FT_PER_PIXEL * 0.35;
+        const horizonFeet = plane.xFeet + canvas.width * SCREEN_FT_PER_PIXEL * 1.6;
+        while (world.nextTowerXFeet < horizonFeet) {
+          spawnBoosterTower(world.nextTowerXFeet);
+          world.nextTowerXFeet += BOOSTER_TOWER_MIN_SPACING_FEET + Math.random() * (BOOSTER_TOWER_MAX_SPACING_FEET - BOOSTER_TOWER_MIN_SPACING_FEET);
+        }
       }
-    }
 
-    if (smoke.grapple.state !== "idle") {
-      const basketX = Math.floor(worldXToScreenX(plane.xFeet + 18 * SCREEN_FT_PER_PIXEL));
-      const basketY = Math.floor(screenYFromFeet(plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL));
-      const hookX = Math.floor(worldXToScreenX(smoke.grapple.hookX));
-      const hookY = Math.floor(screenYFromFeet(smoke.grapple.hookFeet));
+      function updateBoosterTowers(dt) {
+        if (gameState !== STATE_PLAYING) return;
 
-      ctx.beginPath();
-      ctx.moveTo(basketX, basketY);
-      ctx.lineTo(hookX, hookY);
-      ctx.stroke();
+        const horizonFeet = plane.xFeet + canvas.width * SCREEN_FT_PER_PIXEL * 1.6;
+        while (world.nextTowerXFeet < horizonFeet) {
+          spawnBoosterTower(world.nextTowerXFeet);
+          world.nextTowerXFeet += BOOSTER_TOWER_MIN_SPACING_FEET + Math.random() * (BOOSTER_TOWER_MAX_SPACING_FEET - BOOSTER_TOWER_MIN_SPACING_FEET);
+        }
 
-      ctx.strokeRect(hookX - 3, hookY - 3, 6, 6);
-      if (smoke.grapple.hasPack) {
-        drawBoosterPack(hookX, hookY - 12, false);
+        world.boosterTowers = world.boosterTowers.filter(tower => {
+          if (tower.collected && smoke.grapple.targetTower !== tower) return false;
+          return tower.worldX > plane.xFeet - 22000;
+        });
       }
-    }
-  }
 
-  function drawSmokeTrail() {
-    const smokeColors = [
-      { stroke: "#6ddc71", fill: "#44b95d" },
-      { stroke: "#ff7a85", fill: "#e74d63" }
-    ];
-
-    for (let i = 0; i < smoke.trail.length; i++) {
-      const p = smoke.trail[i];
-      const palette = smokeColors[p.paletteIndex ?? 0] || smokeColors[0];
-      const size = Math.max(2, Math.floor(7 * (p.life / p.maxLife)));
-      const x = Math.floor(p.x - size / 2);
-      const y = Math.floor(p.y - size / 2);
-      ctx.fillStyle = palette.fill;
-      ctx.strokeStyle = palette.stroke;
-      ctx.fillRect(x, y, size, size);
-      ctx.strokeRect(x, y, size, size);
-    }
-  }
-
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    initTrees();
-    initLowClouds();
-    initBoosterTowers();
-    initAir();
-    initStars();
-  }
-  window.addEventListener("resize", resize);
-
-  function resetGame() {
-    initBiomeBands();
-    plane.xFeet = 0;
-    plane.yFeetMSL = 8000;
-    plane.vy = 0;
-    plane.forwardSpeed = plane.baseForwardSpeed;
-    score = 0;
-    timeElapsed = 0;
-    balloonBurst = false;
-    burstTimer = 0;
-    burstPieces = [];
-    smoke.canisters = [];
-    smoke.trail = [];
-    smoke.spawnTimer = 2.5;
-    smoke.inventory = 0;
-    smoke.boostTimer = 0;
-    smoke.nextActivationColorIndex = 0;
-    smoke.activePaletteIndex = 0;
-    resetGrappleToBalloon();
-    world.boosterTowers = [];
-    world.nextTowerXFeet = 0;
-    audioState.jetstreamTriggered = false;
-    audioState.endTriggered = false;
-    audioState.victoryTriggered = false;
-    audioState.queue = [];
-    audioState.current = null;
-    for (const key of Object.keys(keys)) keys[key] = false;
-    stopAllAudio();
-    gameState = STATE_START;
-    lastTime = performance.now();
-    initTrees();
-    initLowClouds();
-    initBoosterTowers();
-    initAir();
-    initStars();
-    initializeJetstreamState();
-    syncAudioMuteStates();
-  }
-
-  function update(dt) {
-    if (gameState !== STATE_PLAYING) return;
-
-    timeElapsed += dt;
-    plane.xFeet += plane.forwardSpeed * dt;
-
-    if (!balloonBurst) {
-      if (keys["arrowup"] || keys["w"]) plane.vy += plane.climbAccel * dt;
-      if (keys["arrowdown"] || keys["s"]) plane.vy -= plane.climbAccel * dt;
-    }
-
-    plane.vy *= Math.pow(plane.drag, dt * 60);
-    if (balloonBurst) {
-      plane.vy -= 24000 * dt;
-      plane.vy = clamp(plane.vy, -36000, 4000);
-    } else {
-      plane.vy = clamp(plane.vy, plane.maxDescent, plane.maxClimb);
-    }
-    plane.yFeetMSL += plane.vy * dt;
-
-    updateAir(dt);
-    updateJetstreamState(dt);
-
-    if (!balloonBurst && plane.yFeetMSL >= BALLOON_BURST_FEET) {
-      burstBalloon();
-    }
-
-    const jet = !balloonBurst && inJetstreamBand();
-    if (jet) {
-      triggerJetstreamAudioSequence();
-    }
-    if (milesRemaining() <= 50) {
-      triggerEndAudio();
-    }
-
-    const targetForwardSpeed = balloonBurst
-      ? 900
-      : (jet ? 7000 : plane.baseForwardSpeed) + (smoke.boostTimer > 0 ? SMOKE_BOOST_SPEED_BONUS : 0);
-    plane.forwardSpeed = lerp(
-      plane.forwardSpeed,
-      targetForwardSpeed,
-      Math.min(1, dt * 3)
-    );
-
-    if (jet) score += dt * 18;
-
-    updateTrees(dt);
-    updateLowClouds(dt);
-    updateBoosterTowers(dt);
-    updateGrapple(dt);
-    updateSmokeTrail(dt);
-    updateBurstPieces(dt);
-
-    if (plane.yFeetMSL <= GROUND_FEET_MSL + 300) {
-      stopAllAudio();
-      gameState = STATE_CRASHED;
-      return;
-    }
-
-    if (!balloonBurst && tripProgressFeet() >= ROUTE_FEET) {
-      triggerVictoryAudio();
-      gameState = STATE_FINISHED;
-    }
-  }
-
-  function updateBurstPieces(dt) {
-    if (!burstPieces.length) return;
-    burstTimer = Math.max(0, burstTimer - dt);
-    for (const piece of burstPieces) {
-      piece.x += piece.vx * dt;
-      piece.y += piece.vy * dt;
-      piece.vy += 160 * dt;
-      piece.life -= dt;
-    }
-    burstPieces = burstPieces.filter(piece => piece.life > 0);
-  }
-
-  function mixColor(a, b, t) {
-    return [
-      Math.round(lerp(a[0], b[0], t)),
-      Math.round(lerp(a[1], b[1], t)),
-      Math.round(lerp(a[2], b[2], t))
-    ];
-  }
-
-  function rgbString(rgb) {
-    return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
-  }
-
-  function rgbaString(rgb, alpha) {
-    return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
-  }
-
-  function drawSky() {
-    const fade = spaceFadeAlpha();
-
-    if (plane.yFeetMSL >= BLACK_SKY_START_FEET) {
-      const starFade = smoothstep(BLACK_SKY_START_FEET, BLACK_SKY_START_FEET + 12000, plane.yFeetMSL);
-      ctx.fillStyle = "rgb(0,0,0)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = `rgba(255,255,255,${0.3 + 0.7 * starFade})`;
-      for (const star of world.stars) {
-        const twinkle = 0.55 + 0.45 * Math.sin(timeElapsed * 2.3 + star.twinkle);
-        ctx.globalAlpha = starFade * twinkle;
-        ctx.fillRect(Math.floor(star.x), Math.floor(star.y), star.size, star.size);
+      function getGrappleDragAngleRad() {
+        const speedNorm = clamp(plane.forwardSpeed / GRAPPLE_SPEED_FOR_MAX_DRAG, 0, 1);
+        const angleDeg = lerp(GRAPPLE_MIN_DRAG_ANGLE_DEG, GRAPPLE_MAX_DRAG_ANGLE_DEG, speedNorm);
+        return angleDeg * Math.PI / 180;
       }
-      ctx.globalAlpha = 1;
-      return;
-    }
 
-    const centerX = canvas.width * 0.5;
-    const centerBoundaryY = getWarmBoundaryScreenYAtScreenX(centerX);
-    const centerBiomeBaseTemp = getBiomeBaseTempAtScreenX(centerX);
-    const centerBiomeNorm = biomeWarmNorm(centerBiomeBaseTemp);
-    const centerAirBottomColor = getAirBottomColorAtScreenX(centerX);
-    const spaceBlend = smoothstep(0.28, 0.68, fade);
-    const nearSpaceLock = smoothstep(0.68, 0.78, fade);
+      function updateGrapple(dt) {
+        if (smoke.grapple.state === "idle") return;
 
-    const rawTopSpaceColor = mixColor([0, 10, 42], [14, 12, 48], centerBiomeNorm * 0.25);
-    const rawUpperWarmColor = mixColor([74, 78, 138], [122, 86, 150], centerBiomeNorm);
-    const rawUpperColdColor = mixColor([26, 78, 184], [54, 108, 204], centerBiomeNorm * 0.45);
-    const rawTropopauseColor = mixColor([170, 186, 255], [188, 188, 250], centerBiomeNorm * 0.35);
-    const rawLowerAirTarget = mixColor([136, 142, 190], [210, 134, 132], centerBiomeNorm);
-    const rawLowerAirColor = mixColor(centerAirBottomColor, rawLowerAirTarget, 0.42);
+        const basketX = plane.xFeet + 18 * SCREEN_FT_PER_PIXEL;
+        const basketFeet = plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL;
+        const spaceHeld = !!keys[" "];
+        smoke.grapple.startX = basketX;
+        smoke.grapple.startFeet = basketFeet;
 
-    const deepSpaceColor = [0, 3, 16];
-    const upperSpaceColor = [3, 8, 28];
-    const highAtmosColor = [12, 24, 58];
-    const midAtmosColor = [26, 44, 86];
-    const lowAtmosColor = [52, 78, 128];
-    const lockedNearSpaceBottom = [30, 44, 78];
+        if (smoke.grapple.state === "extending" && !spaceHeld) {
+          smoke.grapple.state = "extended";
+        }
 
-    let topSpaceColor = mixColor(rawTopSpaceColor, deepSpaceColor, spaceBlend);
-    let upperWarmColor = mixColor(rawUpperWarmColor, upperSpaceColor, spaceBlend);
-    let upperColdColor = mixColor(rawUpperColdColor, highAtmosColor, spaceBlend);
-    let tropopauseColor = mixColor(rawTropopauseColor, midAtmosColor, spaceBlend);
-    let lowerAirColor = mixColor(rawLowerAirColor, lowAtmosColor, spaceBlend);
-    let bottomAirColor = mixColor(centerAirBottomColor, lowAtmosColor, spaceBlend * 0.9);
+        if (smoke.grapple.state === "extending") {
+          smoke.grapple.cableLengthFeet = Math.min(GRAPPLE_MAX_REACH_FEET, smoke.grapple.cableLengthFeet + GRAPPLE_EXTEND_SPEED_FPS * dt);
+          if (smoke.grapple.cableLengthFeet >= GRAPPLE_MAX_REACH_FEET) {
+            smoke.grapple.state = "extended";
+          }
+        } else if (smoke.grapple.state === "raising") {
+          smoke.grapple.cableLengthFeet = Math.max(0, smoke.grapple.cableLengthFeet - GRAPPLE_RAISE_SPEED_FPS * dt);
+          if (smoke.grapple.cableLengthFeet <= 0) {
+            smoke.grapple.hookFeet = basketFeet;
+            smoke.grapple.hookX = basketX;
+            if (smoke.grapple.hasPack && smoke.inventory < MAX_SMOKE_INVENTORY) {
+              smoke.inventory++;
+            }
+            smoke.grapple.state = "idle";
+            smoke.grapple.targetTower = null;
+            smoke.grapple.hasPack = false;
+            return;
+          }
+        }
 
-    topSpaceColor = mixColor(topSpaceColor, deepSpaceColor, nearSpaceLock);
-    upperWarmColor = mixColor(upperWarmColor, upperSpaceColor, nearSpaceLock);
-    upperColdColor = mixColor(upperColdColor, highAtmosColor, nearSpaceLock);
-    tropopauseColor = mixColor(tropopauseColor, midAtmosColor, nearSpaceLock);
-    lowerAirColor = mixColor(lowerAirColor, lowAtmosColor, nearSpaceLock);
-    bottomAirColor = mixColor(bottomAirColor, lockedNearSpaceBottom, nearSpaceLock);
+        const dragAngle = getGrappleDragAngleRad();
+        const horizontalDragFeet = Math.sin(dragAngle) * smoke.grapple.cableLengthFeet;
+        const verticalDropFeet = Math.cos(dragAngle) * smoke.grapple.cableLengthFeet;
+        smoke.grapple.hookX = basketX - horizontalDragFeet;
+        smoke.grapple.hookFeet = basketFeet - verticalDropFeet;
 
-    const lockedBoundaryY = lerp(centerBoundaryY, canvas.height * 0.42, nearSpaceLock);
-    const skyTopY = lockedBoundaryY - canvas.height * 1.4;
-    const upperWarmY = lockedBoundaryY - canvas.height * 0.88;
-    const upperColdY = lockedBoundaryY - canvas.height * 0.46;
-    const tropopauseY = lockedBoundaryY;
-    const lowerBlendY = lockedBoundaryY + canvas.height * 0.22;
-    const skyBottomY = canvas.height;
-
-    const backgroundGrad = ctx.createLinearGradient(0, skyTopY, 0, skyBottomY);
-    backgroundGrad.addColorStop(0, rgbString(topSpaceColor));
-    backgroundGrad.addColorStop(clamp((upperWarmY - skyTopY) / (skyBottomY - skyTopY), 0, 1), rgbString(upperWarmColor));
-    backgroundGrad.addColorStop(clamp((upperColdY - skyTopY) / (skyBottomY - skyTopY), 0, 1), rgbString(upperColdColor));
-    backgroundGrad.addColorStop(clamp((tropopauseY - skyTopY) / (skyBottomY - skyTopY), 0, 1), rgbString(tropopauseColor));
-    backgroundGrad.addColorStop(clamp((lowerBlendY - skyTopY) / (skyBottomY - skyTopY), 0, 1), rgbString(lowerAirColor));
-    backgroundGrad.addColorStop(1, rgbString(bottomAirColor));
-    ctx.fillStyle = backgroundGrad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const transitionHalfHeight = Math.max(70, canvas.height * 0.14);
-    const bandAlphaScale = (1 - smoothstep(0.24, 0.60, fade)) * (1 - nearSpaceLock);
-    if (bandAlphaScale > 0.001) {
-      for (let x = 0; x < canvas.width; x += air.stepPx) {
-        const boundaryY = getWarmBoundaryScreenYAtScreenX(x);
-        const biomeBaseTemp = getBiomeBaseTempAtScreenX(x);
-        const biomeNorm = biomeWarmNorm(biomeBaseTemp);
-        const airBottomColor = getAirBottomColorAtScreenX(x);
-        const rawLocalTropopauseColor = mixColor([170, 186, 255], [188, 188, 250], biomeNorm * 0.35);
-        const rawLocalLowerAirTarget = mixColor([136, 142, 190], [210, 134, 132], biomeNorm);
-        const rawLocalLowerAirColor = mixColor(airBottomColor, rawLocalLowerAirTarget, 0.42);
-        const localTropopauseColor = mixColor(mixColor(rawLocalTropopauseColor, midAtmosColor, spaceBlend), midAtmosColor, nearSpaceLock);
-        const localLowerAirColor = mixColor(mixColor(rawLocalLowerAirColor, lowAtmosColor, spaceBlend), lowAtmosColor, nearSpaceLock);
-
-        const bandTopY = boundaryY - transitionHalfHeight;
-        const bandBottomY = boundaryY + transitionHalfHeight;
-        const bandGrad = ctx.createLinearGradient(0, bandTopY, 0, bandBottomY);
-        bandGrad.addColorStop(0, rgbaString(localTropopauseColor, 0));
-        bandGrad.addColorStop(0.38, rgbaString(localTropopauseColor, 0.82 * bandAlphaScale));
-        bandGrad.addColorStop(0.5, rgbaString(localTropopauseColor, 0.96 * bandAlphaScale));
-        bandGrad.addColorStop(0.62, rgbaString(localLowerAirColor, 0.78 * bandAlphaScale));
-        bandGrad.addColorStop(1, rgbaString(localLowerAirColor, 0));
-        ctx.fillStyle = bandGrad;
-        ctx.fillRect(x, 0, air.stepPx, canvas.height);
+        if ((smoke.grapple.state === "extending" || smoke.grapple.state === "extended") && !smoke.grapple.hasPack) {
+          let snaggedTower = null;
+          let bestDx = Infinity;
+          for (const tower of world.boosterTowers) {
+            if (tower.collected || !tower.hasBooster) continue;
+            const dx = Math.abs(tower.worldX - smoke.grapple.hookX);
+            if (dx > GRAPPLE_SNAG_X_FEET) continue;
+            const crossedTop = smoke.grapple.hookFeet <= tower.topFeet + GRAPPLE_SNAG_Y_FEET;
+            const notTooFarBelow = smoke.grapple.hookFeet >= tower.topFeet - GRAPPLE_SNAG_Y_FEET;
+            if (!crossedTop || !notTooFarBelow) continue;
+            if (dx < bestDx) {
+              bestDx = dx;
+              snaggedTower = tower;
+            }
+          }
+          if (snaggedTower) {
+            snaggedTower.hasBooster = false;
+            snaggedTower.collected = true;
+            smoke.grapple.targetTower = snaggedTower;
+            smoke.grapple.hasPack = true;
+            smoke.grapple.state = "raising";
+          }
+        }
       }
-    }
 
-    if (fade > 0) {
-      ctx.fillStyle = `rgba(0,0,0,${0.72 * fade})`;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      function updateSmokeTrail(dt) {
+        if (smoke.boostTimer > 0) {
+          smoke.boostTimer = Math.max(0, smoke.boostTimer - dt);
+          const sourceX = smokeSourceX();
+          const sourceY = smokeSourceY() + Math.sin(performance.now() / 220) * 1.5;
+          for (let i = 0; i < 3; i++) {
+            smoke.trail.push({
+              x: sourceX + Math.random() * 4 - 2,
+              y: sourceY + Math.random() * 4 - 2,
+              vx: -160 - Math.random() * 260,
+              vy: -20 + Math.random() * 40,
+              life: 0.65 + Math.random() * 0.45,
+              maxLife: 0.65 + Math.random() * 0.45,
+              paletteIndex: smoke.activePaletteIndex
+            });
+          }
+        }
 
-      ctx.fillStyle = `rgba(255,255,255,${0.25 + 0.75 * fade})`;
-      for (const star of world.stars) {
-        const twinkle = 0.55 + 0.45 * Math.sin(timeElapsed * 2.3 + star.twinkle);
-        ctx.globalAlpha = fade * twinkle;
-        ctx.fillRect(Math.floor(star.x), Math.floor(star.y), star.size, star.size);
+        const nextTrail = [];
+        for (const p of smoke.trail) {
+          p.life -= dt;
+          if (p.life <= 0) continue;
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vx *= 0.985;
+          p.vy *= 0.985;
+          nextTrail.push(p);
+        }
+        smoke.trail = nextTrail;
       }
-      ctx.globalAlpha = 1;
-    }
-  }
 
-  function drawPressureIsolines() {
-    if (!showIsolines) return;
+      function drawBoosterPack(x, y, mirror = false) {
+        const dir = mirror ? -1 : 1;
+        ctx.strokeRect(x - 5, y - 8, 10, 14);
+        ctx.beginPath();
+        ctx.moveTo(x - 2 * dir, y - 8);
+        ctx.lineTo(x, y - 13);
+        ctx.lineTo(x + 2 * dir, y - 9);
+        ctx.moveTo(x + 5 * dir, y - 2);
+        ctx.lineTo(x + 10 * dir, y - 2);
+        ctx.stroke();
+      }
 
-    const lineColor = "#00FF66";
-    ctx.save();
-    ctx.strokeStyle = lineColor;
-    ctx.fillStyle = lineColor;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([]);
+      function drawGrappleRope(basketX, basketY, hookX, hookY, hasPack) {
+        const dx = hookX - basketX;
+        const dy = hookY - basketY;
+        const samples = 36;
 
-    for (let pressureMb = 900; pressureMb >= 100; pressureMb -= 100) {
-      let started = false;
-      let labelX = null;
-      let labelY = null;
+        // Reversed square-root-style drop:
+        //   x(t) = basketX + dx * t
+        //   y(t) = basketY + dy * (1 - (1 - t)^q)
+        // where 0 < q < 1.
+        // This makes the rope leave the basket at a finite straight angle,
+        // then approach the hook with an increasingly vertical tangent.
+        const q = hasPack ? 0.38 : 0.52;
 
-      ctx.beginPath();
-      for (let x = 0; x <= canvas.width; x += air.stepPx) {
-        const altitudeFeet = getAltitudeFeetForPressureAtScreenX(x, pressureMb);
-        const y = screenYFromFeet(altitudeFeet);
-
-        if (!started) {
-          ctx.moveTo(x, y);
-          started = true;
-        } else {
+        ctx.beginPath();
+        ctx.moveTo(basketX, basketY);
+        for (let i = 1; i <= samples; i++) {
+          const t = i / samples;
+          const x = basketX + dx * t;
+          const yProgress = 1 - Math.pow(1 - t, q);
+          const y = basketY + dy * yProgress;
           ctx.lineTo(x, y);
         }
+        ctx.stroke();
+      }
 
-        if (labelX === null && y >= 12 && y <= canvas.height - 12) {
-          labelX = x;
-          labelY = y;
+      function drawBoosterTowers() {
+        const groundY = screenYFromFeet(GROUND_FEET_MSL);
+        ctx.strokeStyle = "#FFF";
+        ctx.lineWidth = 2;
+
+        for (const tower of world.boosterTowers) {
+          const x = Math.floor(worldXToScreenX(tower.worldX));
+          const topY = Math.floor(screenYFromFeet(tower.topFeet));
+          if (x < -30 || x > canvas.width + 30) continue;
+
+          ctx.beginPath();
+          ctx.moveTo(x, groundY);
+          ctx.lineTo(x, topY);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x - 6, groundY);
+          ctx.lineTo(x, topY);
+          ctx.lineTo(x + 6, groundY);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x - 9, topY + 3);
+          ctx.lineTo(x + 9, topY + 3);
+          ctx.stroke();
+
+          if (tower.hasBooster) {
+            drawBoosterPack(x, topY - 10, false);
+          }
+        }
+
+        if (smoke.grapple.state !== "idle") {
+          const basketX = Math.floor(worldXToScreenX(plane.xFeet + 18 * SCREEN_FT_PER_PIXEL));
+          const basketY = Math.floor(screenYFromFeet(plane.yFeetMSL + 2 * SCREEN_FT_PER_PIXEL));
+          const hookX = Math.floor(worldXToScreenX(smoke.grapple.hookX));
+          const hookY = Math.floor(screenYFromFeet(smoke.grapple.hookFeet));
+
+          drawGrappleRope(basketX, basketY, hookX, hookY, smoke.grapple.hasPack);
+
+          ctx.strokeRect(hookX - 3, hookY - 3, 6, 6);
+          if (smoke.grapple.hasPack) {
+            drawBoosterPack(hookX, hookY - 12, false);
+          }
         }
       }
-      ctx.stroke();
 
-      if (labelX !== null) {
-        const text = `${pressureMb} mb`;
-        ctx.font = "12px monospace";
-        ctx.textAlign = "left";
-        ctx.textBaseline = "bottom";
-        ctx.fillText(text, Math.min(labelX + 6, canvas.width - 64), labelY - 3);
-      }
-    }
-
-    ctx.restore();
-  }
-
-  function drawJetstreamBand() {
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8, 8]);
-    ctx.strokeStyle = "rgba(255,255,255,0.9)";
-
-    ctx.beginPath();
-    let startedTop = false;
-    for (let x = 0; x <= canvas.width; x += air.stepPx) {
-      const centerY = getWarmBoundaryScreenYAtScreenX(x);
-      const yTop = centerY - (JET_BAND_HALF_THICKNESS / SCREEN_FT_PER_PIXEL);
-      if (!startedTop) {
-        ctx.moveTo(x, yTop);
-        startedTop = true;
-      } else {
-        ctx.lineTo(x, yTop);
-      }
-    }
-    ctx.stroke();
-
-    ctx.beginPath();
-    let startedBottom = false;
-    for (let x = 0; x <= canvas.width; x += air.stepPx) {
-      const centerY = getWarmBoundaryScreenYAtScreenX(x);
-      const yBottom = centerY + (JET_BAND_HALF_THICKNESS / SCREEN_FT_PER_PIXEL);
-      if (!startedBottom) {
-        ctx.moveTo(x, yBottom);
-        startedBottom = true;
-      } else {
-        ctx.lineTo(x, yBottom);
-      }
-    }
-    ctx.stroke();
-
-    ctx.setLineDash([]);
-    ctx.strokeStyle = "#fff";
-    for (let x = 0; x < canvas.width; x += 28) {
-      const y = Math.floor(getWarmBoundaryScreenYAtScreenX(x));
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + 14, y);
-      ctx.lineTo(x + 9, y - 3);
-      ctx.moveTo(x + 14, y);
-      ctx.lineTo(x + 9, y + 3);
-      ctx.stroke();
-    }
-  }
-
-  function drawHorizonAndGround() {
-    const groundY = screenYFromFeet(GROUND_FEET_MSL);
-    const stripeWidth = 14;
-
-    for (let x = 0; x < canvas.width; x += stripeWidth) {
-      const palette = getGroundPaletteAtScreenX(x + stripeWidth * 0.5);
-      const grad = ctx.createLinearGradient(0, groundY, 0, canvas.height);
-      grad.addColorStop(0, rgbString(palette.top));
-      grad.addColorStop(1, rgbString(palette.bottom));
-      ctx.fillStyle = grad;
-      ctx.fillRect(x, Math.floor(groundY), stripeWidth + 1, canvas.height - groundY);
-    }
-
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(0, Math.floor(groundY));
-    ctx.lineTo(canvas.width, Math.floor(groundY));
-    ctx.stroke();
-  }
-
-  function drawLowClouds() {
-    const groundY = screenYFromFeet(GROUND_FEET_MSL);
-    ctx.strokeStyle = "#fff";
-
-    for (const c of world.lowClouds) {
-      const y = Math.floor(c.y * groundY);
-      const x = Math.floor(c.x);
-      const w = c.w;
-      const h = c.h;
-      if (y > groundY - 8) continue;
-
-      ctx.strokeRect(x, y, w, h);
-      ctx.beginPath();
-      ctx.moveTo(x - 10, y + Math.floor(h / 2));
-      ctx.lineTo(x, y + Math.floor(h / 2));
-      ctx.stroke();
-    }
-  }
-
-  function drawCritters() {
-    const groundY = screenYFromFeet(GROUND_FEET_MSL);
-
-    for (const critter of world.critters) {
-      ctx.strokeStyle = rgbString(getSpriteColorForBiomeKey(critter.biomeKey));
-      const x = Math.floor(critter.x);
-      const y = Math.floor(groundY - 4 - Math.sin((plane.xFeet / 400) + critter.bob) * 2);
-      const s = critter.size;
-
-      if (["rabbit", "hare"].includes(critter.kind)) {
-        ctx.strokeRect(x, y - s, s + 1, s - 1);
-        ctx.beginPath();
-        ctx.moveTo(x + 2, y - s); ctx.lineTo(x + 2, y - s - 5);
-        ctx.moveTo(x + 5, y - s); ctx.lineTo(x + 5, y - s - 6);
-        ctx.stroke();
-      } else if (["fox", "coyote", "deer", "caribou", "bison", "monkey"].includes(critter.kind)) {
-        ctx.strokeRect(x, y - s, s + 4, s - 1);
-        ctx.beginPath();
-        ctx.moveTo(x + 1, y); ctx.lineTo(x + 1, y + 4);
-        ctx.moveTo(x + 5, y); ctx.lineTo(x + 5, y + 4);
-        ctx.moveTo(x + s + 1, y); ctx.lineTo(x + s + 1, y + 4);
-        ctx.moveTo(x + s + 4, y); ctx.lineTo(x + s + 4, y + 4);
-        if (["deer", "caribou", "bison"].includes(critter.kind)) {
-          ctx.moveTo(x + s + 5, y - s + 1); ctx.lineTo(x + s + 9, y - s + 1);
-          ctx.moveTo(x + s + 7, y - s + 1); ctx.lineTo(x + s + 10, y - s - 3);
-          ctx.moveTo(x + s + 7, y - s + 1); ctx.lineTo(x + s + 10, y - s + 4);
-        } else {
-          ctx.moveTo(x + s + 4, y - 2); ctx.lineTo(x + s + 9, y - 5); ctx.lineTo(x + s + 6, y - 1);
-        }
-        ctx.stroke();
-      } else if (["owl", "hawk", "vulture", "loon", "parrot", "gull"].includes(critter.kind)) {
-        ctx.beginPath();
-        ctx.moveTo(x, y - 3); ctx.lineTo(x + 4, y - 7); ctx.lineTo(x + 8, y - 3);
-        ctx.moveTo(x + 8, y - 3); ctx.lineTo(x + 12, y - 7); ctx.lineTo(x + 16, y - 3);
-        ctx.stroke();
-      } else if (["snake", "fish", "lizard"].includes(critter.kind)) {
-        ctx.beginPath();
-        ctx.moveTo(x, y - 2);
-        ctx.lineTo(x + 4, y - 4);
-        ctx.lineTo(x + 8, y - 1);
-        ctx.lineTo(x + 12, y - 3);
-        ctx.lineTo(x + 16, y - 1);
-        ctx.stroke();
-      } else if (critter.kind === "frog") {
-        ctx.strokeRect(x + 1, y - 5, 8, 5);
-        ctx.beginPath();
-        ctx.moveTo(x + 1, y); ctx.lineTo(x - 2, y + 3);
-        ctx.moveTo(x + 9, y); ctx.lineTo(x + 12, y + 3);
-        ctx.stroke();
-      } else if (critter.kind === "scorpion") {
-        ctx.strokeRect(x + 2, y - 4, 8, 4);
-        ctx.beginPath();
-        ctx.moveTo(x + 10, y - 4); ctx.lineTo(x + 14, y - 7); ctx.lineTo(x + 16, y - 3);
-        ctx.moveTo(x + 2, y); ctx.lineTo(x, y + 3);
-        ctx.moveTo(x + 10, y); ctx.lineTo(x + 12, y + 3);
-        ctx.stroke();
-      }
-    }
-  }
-
-  function drawTrees() {
-    const groundY = screenYFromFeet(GROUND_FEET_MSL);
-
-    for (const tree of world.trees) {
-      ctx.strokeStyle = rgbString(getSpriteColorForBiomeKey(tree.biomeKey));
-      ctx.fillStyle = rgbString(getSpriteColorForBiomeKey(tree.biomeKey));
-      const x = Math.floor(tree.x);
-      const trunkTop = Math.floor(groundY - tree.h);
-      const trunkBottom = Math.floor(groundY);
-      const w = tree.width;
-
-      if (tree.kind === "pine" || tree.kind === "spruce") {
-        ctx.beginPath();
-        ctx.moveTo(x, trunkTop + 4);
-        ctx.lineTo(x + tree.lean, trunkBottom);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, trunkTop);
-        ctx.lineTo(x - 5, trunkTop + 8);
-        ctx.lineTo(x + 5, trunkTop + 8);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, trunkTop + 6);
-        ctx.lineTo(x - 4, trunkTop + 13);
-        ctx.lineTo(x + 4, trunkTop + 13);
-        ctx.closePath();
-        ctx.stroke();
-      } else if (tree.kind === "oak" || tree.kind === "broadleaf") {
-        ctx.beginPath();
-        ctx.moveTo(x, trunkTop + 5);
-        ctx.lineTo(x + tree.lean, trunkBottom);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(x, trunkTop + 6, 5, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(x - 4, trunkTop + 11, 4, 0, Math.PI * 2);
-        ctx.arc(x + 4, trunkTop + 11, 4, 0, Math.PI * 2);
-        ctx.stroke();
-      } else if (tree.kind === "shrub") {
-        ctx.strokeRect(x - 5, trunkBottom - 8, 10, 7);
-        ctx.strokeRect(x - 7, trunkBottom - 5, 14, 5);
-      } else if (tree.kind === "palm") {
-        ctx.beginPath();
-        ctx.moveTo(x - 1, trunkBottom);
-        ctx.lineTo(x + 2, trunkBottom - 10);
-        ctx.lineTo(x + 4, trunkTop + 8);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x + 4, trunkTop + 8);
-        ctx.lineTo(x - 7, trunkTop + 6);
-        ctx.moveTo(x + 4, trunkTop + 8);
-        ctx.lineTo(x + 12, trunkTop + 5);
-        ctx.moveTo(x + 4, trunkTop + 8);
-        ctx.lineTo(x - 4, trunkTop + 1);
-        ctx.moveTo(x + 4, trunkTop + 8);
-        ctx.lineTo(x + 9, trunkTop + 1);
-        ctx.stroke();
-      } else if (tree.kind === "fern") {
-        ctx.beginPath();
-        ctx.moveTo(x, trunkBottom);
-        ctx.lineTo(x, trunkBottom - 8);
-        ctx.moveTo(x, trunkBottom - 6); ctx.lineTo(x - 7, trunkBottom - 10);
-        ctx.moveTo(x, trunkBottom - 6); ctx.lineTo(x + 7, trunkBottom - 10);
-        ctx.moveTo(x, trunkBottom - 3); ctx.lineTo(x - 6, trunkBottom - 5);
-        ctx.moveTo(x, trunkBottom - 3); ctx.lineTo(x + 6, trunkBottom - 5);
-        ctx.stroke();
-      } else if (tree.kind === "reed") {
-        ctx.beginPath();
-        ctx.moveTo(x - 3, trunkBottom); ctx.lineTo(x - 3, trunkBottom - 13);
-        ctx.moveTo(x + 1, trunkBottom); ctx.lineTo(x + 1, trunkBottom - 15);
-        ctx.moveTo(x + 5, trunkBottom); ctx.lineTo(x + 5, trunkBottom - 12);
-        ctx.stroke();
-        ctx.strokeRect(x - 4, trunkBottom - 15, 2, 4);
-        ctx.strokeRect(x, trunkBottom - 17, 2, 4);
-      } else if (tree.kind === "wave") {
-        ctx.beginPath();
-        ctx.moveTo(x - 10, trunkBottom - 2);
-        ctx.lineTo(x - 5, trunkBottom - 5);
-        ctx.lineTo(x, trunkBottom - 2);
-        ctx.lineTo(x + 5, trunkBottom - 5);
-        ctx.lineTo(x + 10, trunkBottom - 2);
-        ctx.stroke();
-      } else if (tree.kind === "foam") {
-        ctx.fillRect(x - 8, trunkBottom - 3, 4, 2);
-        ctx.fillRect(x - 1, trunkBottom - 5, 5, 2);
-        ctx.fillRect(x + 7, trunkBottom - 3, 3, 2);
-      } else if (tree.kind === "berg") {
-        ctx.beginPath();
-        ctx.moveTo(x - 9, trunkBottom);
-        ctx.lineTo(x - 4, trunkBottom - 8);
-        ctx.lineTo(x + 1, trunkBottom - 12);
-        ctx.lineTo(x + 7, trunkBottom - 7);
-        ctx.lineTo(x + 10, trunkBottom);
-        ctx.stroke();
-      } else if (tree.kind === "reef") {
-        ctx.beginPath();
-        ctx.moveTo(x - 10, trunkBottom);
-        ctx.lineTo(x - 6, trunkBottom - 4);
-        ctx.lineTo(x - 1, trunkBottom - 2);
-        ctx.lineTo(x + 4, trunkBottom - 7);
-        ctx.lineTo(x + 10, trunkBottom);
-        ctx.stroke();
-      } else if (tree.kind === "islet") {
-        ctx.beginPath();
-        ctx.moveTo(x - 10, trunkBottom);
-        ctx.lineTo(x - 4, trunkBottom - 5);
-        ctx.lineTo(x + 3, trunkBottom - 5);
-        ctx.lineTo(x + 10, trunkBottom);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, trunkBottom - 5);
-        ctx.lineTo(x, trunkBottom - 12);
-        ctx.stroke();
-      } else if (tree.kind === "cactus") {
-        ctx.beginPath();
-        ctx.moveTo(x, trunkBottom); ctx.lineTo(x, trunkBottom - 16);
-        ctx.moveTo(x - 4, trunkBottom - 10); ctx.lineTo(x, trunkBottom - 10); ctx.lineTo(x, trunkBottom - 6);
-        ctx.moveTo(x + 4, trunkBottom - 12); ctx.lineTo(x, trunkBottom - 12); ctx.lineTo(x, trunkBottom - 8);
-        ctx.stroke();
-      } else if (tree.kind === "rock" || tree.kind === "stone") {
-        ctx.beginPath();
-        ctx.moveTo(x - 8, trunkBottom);
-        ctx.lineTo(x - 3, trunkBottom - 5);
-        ctx.lineTo(x + 2, trunkBottom - 3);
-        ctx.lineTo(x + 7, trunkBottom - 7);
-        ctx.lineTo(x + 10, trunkBottom);
-        ctx.stroke();
-      } else if (tree.kind === "mesa" || tree.kind === "butte") {
-        ctx.beginPath();
-        ctx.moveTo(x - 10, trunkBottom);
-        ctx.lineTo(x - 6, trunkBottom - 12);
-        ctx.lineTo(x + 6, trunkBottom - 12);
-        ctx.lineTo(x + 10, trunkBottom);
-        ctx.stroke();
-      } else if (tree.kind === "snowmound") {
-        ctx.beginPath();
-        ctx.moveTo(x - 9, trunkBottom);
-        ctx.lineTo(x - 5, trunkBottom - 3);
-        ctx.lineTo(x, trunkBottom - 5);
-        ctx.lineTo(x + 5, trunkBottom - 3);
-        ctx.lineTo(x + 9, trunkBottom);
-        ctx.stroke();
-      } else if (tree.kind === "bare") {
-        ctx.beginPath();
-        ctx.moveTo(x, trunkBottom);
-        ctx.lineTo(x, trunkBottom - 12);
-        ctx.moveTo(x, trunkBottom - 8); ctx.lineTo(x - 4, trunkBottom - 11);
-        ctx.moveTo(x, trunkBottom - 6); ctx.lineTo(x + 5, trunkBottom - 9);
-        ctx.stroke();
-      } else if (tree.kind === "tuft" || tree.kind === "hay") {
-        ctx.beginPath();
-        ctx.moveTo(x, trunkBottom);
-        ctx.lineTo(x - 4, trunkBottom - 7);
-        ctx.moveTo(x, trunkBottom); ctx.lineTo(x, trunkBottom - 9);
-        ctx.moveTo(x, trunkBottom); ctx.lineTo(x + 4, trunkBottom - 7);
-        if (tree.kind === "hay") {
-          ctx.moveTo(x - 2, trunkBottom); ctx.lineTo(x - 6, trunkBottom - 5);
-          ctx.moveTo(x + 2, trunkBottom); ctx.lineTo(x + 6, trunkBottom - 5);
-        }
-        ctx.stroke();
-      } else if (tree.kind === "flower") {
-        ctx.beginPath();
-        ctx.moveTo(x, trunkBottom); ctx.lineTo(x, trunkBottom - 10);
-        ctx.stroke();
-        ctx.strokeRect(x - 2, trunkBottom - 13, 4, 4);
-      } else if (tree.kind === "spike") {
-        ctx.beginPath();
-        ctx.moveTo(x - 5, trunkBottom);
-        ctx.lineTo(x, trunkBottom - 14);
-        ctx.lineTo(x + 5, trunkBottom);
-        ctx.stroke();
-      }
-    }
-  }
-
-  function drawCitySprite(worldFeet, label, style = "city") {
-    const x = Math.floor(planeScreenX() + (worldFeet - tripProgressFeet()) / SCREEN_FT_PER_PIXEL);
-    const groundY = Math.floor(screenYFromFeet(GROUND_FEET_MSL));
-    if (x < -160 || x > canvas.width + 160) return;
-
-    ctx.strokeStyle = "#fff";
-    ctx.fillStyle = "#000";
-
-    const buildings = style === "city"
-      ? [
-          { dx: -54, w: 16, h: 34 },
-          { dx: -34, w: 20, h: 52 },
-          { dx: -10, w: 18, h: 40 },
-          { dx: 12, w: 24, h: 64 },
-          { dx: 40, w: 16, h: 44 }
-        ]
-      : [
-          { dx: -52, w: 22, h: 42 },
-          { dx: -26, w: 18, h: 56 },
-          { dx: -4, w: 26, h: 72 },
-          { dx: 26, w: 18, h: 50 },
-          { dx: 48, w: 14, h: 38 }
+      function drawSmokeTrail() {
+        const smokeColors = [
+          { stroke: "#6ddc71", fill: "#44b95d" },
+          { stroke: "#ff7a85", fill: "#e74d63" }
         ];
 
-    for (const b of buildings) {
-      ctx.strokeRect(x + b.dx, groundY - b.h, b.w, b.h);
-      const cols = Math.max(1, Math.floor(b.w / 6));
-      const rows = Math.max(1, Math.floor((b.h - 8) / 9));
-      for (let cy = 0; cy < rows; cy++) {
-        for (let cx = 0; cx < cols; cx++) {
-          ctx.fillRect(x + b.dx + 3 + cx * 6, groundY - b.h + 4 + cy * 8, 2, 2);
+        for (let i = 0; i < smoke.trail.length; i++) {
+          const p = smoke.trail[i];
+          const palette = smokeColors[p.paletteIndex ?? 0] || smokeColors[0];
+          const size = Math.max(2, Math.floor(7 * (p.life / p.maxLife)));
+          const x = Math.floor(p.x - size / 2);
+          const y = Math.floor(p.y - size / 2);
+          ctx.fillStyle = palette.fill;
+          ctx.strokeStyle = palette.stroke;
+          ctx.fillRect(x, y, size, size);
+          ctx.strokeRect(x, y, size, size);
         }
       }
-    }
 
-    if (style === "nyc") {
-      ctx.beginPath();
-      ctx.moveTo(x + 9, groundY - 72);
-      ctx.lineTo(x + 17, groundY - 96);
-      ctx.lineTo(x + 25, groundY - 72);
-      ctx.stroke();
-    } else {
-      ctx.beginPath();
-      ctx.moveTo(x - 30, groundY - 52);
-      ctx.lineTo(x - 18, groundY - 74);
-      ctx.lineTo(x - 6, groundY - 52);
-      ctx.stroke();
-    }
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        initTrees();
+        initLowClouds();
+        initBoosterTowers();
+        initAir();
+        initStars();
+      }
+      window.addEventListener("resize", resize);
 
-    ctx.font = "bold 18px monospace";
-    ctx.fillStyle = "#fff";
-    ctx.fillText(label, x - Math.floor(ctx.measureText(label).width / 2), groundY - 110);
-  }
-
-  function drawSun() {
-    const x = canvas.width - 110;
-    const y = 92;
-    const r = 34;
-    const winkPhase = (timeElapsed * 0.55) % 8;
-    const isWinking = !balloonBurst && winkPhase > 6.85 && winkPhase < 7.45;
-
-    ctx.save();
-    ctx.globalAlpha = 1 - spaceFadeAlpha() * 0.7;
-    ctx.translate(x, y);
-    ctx.rotate(sunAngle);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 3;
-    for (let i = 0; i < 12; i++) {
-      const a = (Math.PI * 2 * i) / 12;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(a) * (r + 8), Math.sin(a) * (r + 8));
-      ctx.lineTo(Math.cos(a) * (r + 22), Math.sin(a) * (r + 22));
-      ctx.stroke();
-    }
-    ctx.restore();
-
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.stroke();
-
-    ctx.fillStyle = "#fff";
-    if (balloonBurst) {
-      ctx.fillRect(x - 14, y - 10, 5, 5);
-      ctx.fillRect(x + 9, y - 10, 5, 5);
-      ctx.beginPath();
-      ctx.arc(x, y + 8, 6, 0, Math.PI * 2);
-      ctx.stroke();
-    } else {
-      ctx.fillRect(x - 12, y - 8, 4, 4);
-      if (isWinking) {
-        ctx.beginPath();
-        ctx.moveTo(x + 8, y - 6);
-        ctx.lineTo(x + 14, y - 10);
-        ctx.lineTo(x + 20, y - 6);
-        ctx.stroke();
-      } else {
-        ctx.fillRect(x + 8, y - 8, 4, 4);
+      function resetGame() {
+        finishNameEntryActive = false;
+        finishNameBuffer = "";
+        finishCursorTimer = 0;
+        finishInsertedScore = false;
+        finishRunQualified = false;
+        finishRunTimeSeconds = 0;
+        finishRunRank = null;
+        finishRunWasFastest = false;
+        initBiomeBands();
+        plane.xFeet = 0;
+        plane.yFeetMSL = 8000;
+        plane.vy = 0;
+        plane.forwardSpeed = plane.baseForwardSpeed;
+        score = 0;
+        timeElapsed = 0;
+        balloonBurst = false;
+        burstTimer = 0;
+        burstPieces = [];
+        smoke.canisters = [];
+        smoke.trail = [];
+        smoke.spawnTimer = 2.5;
+        smoke.inventory = 0;
+        smoke.boostTimer = 0;
+        smoke.nextActivationColorIndex = 0;
+        smoke.activePaletteIndex = 0;
+        resetGrappleToBalloon();
+        world.boosterTowers = [];
+        world.nextTowerXFeet = 0;
+        audioState.jetstreamTriggered = false;
+        audioState.endTriggered = false;
+        audioState.victoryTriggered = false;
+        audioState.queue = [];
+        audioState.current = null;
+        for (const key of Object.keys(keys)) keys[key] = false;
+        stopAllAudio();
+        gameState = STATE_START;
+        lastTime = performance.now();
+        initTrees();
+        initLowClouds();
+        initBoosterTowers();
+        initAir();
+        initStars();
+        initializeJetstreamState();
+        syncAudioMuteStates();
       }
 
-      ctx.beginPath();
-      ctx.arc(x, y + 2, 14, 0.18 * Math.PI, 0.82 * Math.PI, false);
-      ctx.stroke();
-    }
-  }
+      function update(dt) {
+        if (gameState !== STATE_PLAYING) return;
 
-  function drawPlane() {
-    const px = planeScreenX();
-    const py = planeScreenY();
-    const bob = balloonBobOffset();
-    const balloonScale = balloonEnvelopeScale();
-    const balloonRadiusX = 10 * balloonScale;
-    const balloonRadiusY = 10 * balloonScale;
-    const balloonTopY = py - 30 + bob;
-    const basketY = py + bob;
-    const balloonPressureMb = getBarometerMb().toFixed(1);
+        timeElapsed += dt;
+        plane.xFeet += plane.forwardSpeed * dt;
 
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
+        if (!balloonBurst) {
+          if (keys["arrowup"] || keys["w"]) plane.vy += plane.climbAccel * dt;
+          if (keys["arrowdown"] || keys["s"]) plane.vy -= plane.climbAccel * dt;
+        }
 
-    if (!balloonBurst) {
-      ctx.beginPath();
-      ctx.ellipse(px + 18, balloonTopY, balloonRadiusX, balloonRadiusY, 0, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.fillStyle = "#22F";
-      ctx.fill();
+        plane.vy *= Math.pow(plane.drag, dt * 60);
+        if (balloonBurst) {
+          plane.vy -= 24000 * dt;
+          plane.vy = clamp(plane.vy, -36000, 4000);
+        } else {
+          plane.vy = clamp(plane.vy, plane.maxDescent, plane.maxClimb);
+        }
+        plane.yFeetMSL += plane.vy * dt;
 
-      ctx.beginPath();
-      ctx.moveTo(px + 18 - balloonRadiusX * 0.9, balloonTopY + balloonRadiusY * 0.45);
-      ctx.lineTo(px + 12, basketY - 10);
-      ctx.moveTo(px + 18 + balloonRadiusX * 0.9, balloonTopY + balloonRadiusY * 0.45);
-      ctx.lineTo(px + 24, basketY - 10);
-      ctx.stroke();
-    }
+        updateAir(dt);
+        updateJetstreamState(dt);
 
-    ctx.strokeRect(px + 12, basketY - 10, 12, 5);
+        if (!balloonBurst && plane.yFeetMSL >= BALLOON_BURST_FEET) {
+          burstBalloon();
+        }
 
-    if (!balloonBurst && smoke.inventory >= 1) {
-      ctx.beginPath();
-      ctx.moveTo(px + 12, basketY - 6);
-      ctx.lineTo(px - 6, basketY - 2);
-      ctx.stroke();
-      drawBoosterPack(px - 14, basketY - 1, true);
-    }
-    if (!balloonBurst && smoke.inventory >= 2) {
-      ctx.beginPath();
-      ctx.moveTo(px + 12, basketY - 3);
-      ctx.lineTo(px - 18, basketY + 5);
-      ctx.stroke();
-      drawBoosterPack(px - 28, basketY + 7, true);
-    }
+        const jet = !balloonBurst && inJetstreamBand();
+        if (jet) {
+          triggerJetstreamAudioSequence();
+        }
+        if (milesRemaining() <= 50) {
+          triggerEndAudio();
+        }
 
-    if (!balloonBurst) {
-      if (plane.vy > 120) {
+        const targetForwardSpeed = balloonBurst
+          ? 900
+          : (jet ? 7000 : plane.baseForwardSpeed) + (smoke.boostTimer > 0 ? SMOKE_BOOST_SPEED_BONUS : 0);
+        plane.forwardSpeed = lerp(
+          plane.forwardSpeed,
+          targetForwardSpeed,
+          Math.min(1, dt * 3)
+        );
+
+        if (jet) score += dt * 18;
+
+        updateTrees(dt);
+        updateLowClouds(dt);
+        updateBoosterTowers(dt);
+        updateGrapple(dt);
+        updateSmokeTrail(dt);
+        updateBurstPieces(dt);
+
+        if (plane.yFeetMSL <= GROUND_FEET_MSL + 300) {
+          stopAllAudio();
+          gameState = STATE_CRASHED;
+          return;
+        }
+
+        if (!balloonBurst && tripProgressFeet() >= ROUTE_FEET) {
+          triggerVictoryAudio();
+          gameState = STATE_FINISHED;
+          startFinishNameEntry();
+        }
+      }
+
+      function updateBurstPieces(dt) {
+        if (!burstPieces.length) return;
+        burstTimer = Math.max(0, burstTimer - dt);
+        for (const piece of burstPieces) {
+          piece.x += piece.vx * dt;
+          piece.y += piece.vy * dt;
+          piece.vy += 160 * dt;
+          piece.life -= dt;
+        }
+        burstPieces = burstPieces.filter(piece => piece.life > 0);
+      }
+
+      function mixColor(a, b, t) {
+        return [
+          Math.round(lerp(a[0], b[0], t)),
+          Math.round(lerp(a[1], b[1], t)),
+          Math.round(lerp(a[2], b[2], t))
+        ];
+      }
+
+      function rgbString(rgb) {
+        return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+      }
+
+      function rgbaString(rgb, alpha) {
+        return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
+      }
+
+      function drawSky() {
+        const fade = spaceFadeAlpha();
+
+        if (plane.yFeetMSL >= BLACK_SKY_START_FEET) {
+          const starFade = smoothstep(BLACK_SKY_START_FEET, BLACK_SKY_START_FEET + 12000, plane.yFeetMSL);
+          ctx.fillStyle = "rgb(0,0,0)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          ctx.fillStyle = `rgba(255,255,255,${0.3 + 0.7 * starFade})`;
+          for (const star of world.stars) {
+            const twinkle = 0.55 + 0.45 * Math.sin(timeElapsed * 2.3 + star.twinkle);
+            ctx.globalAlpha = starFade * twinkle;
+            ctx.fillRect(Math.floor(star.x), Math.floor(star.y), star.size, star.size);
+          }
+          ctx.globalAlpha = 1;
+          return;
+        }
+
+        const centerX = canvas.width * 0.5;
+        const centerBoundaryY = getWarmBoundaryScreenYAtScreenX(centerX);
+        const centerBiomeBaseTemp = getBiomeBaseTempAtScreenX(centerX);
+        const centerBiomeNorm = biomeWarmNorm(centerBiomeBaseTemp);
+        const centerAirBottomColor = getAirBottomColorAtScreenX(centerX);
+        const spaceBlend = smoothstep(0.28, 0.68, fade);
+        const nearSpaceLock = smoothstep(0.68, 0.78, fade);
+
+        const rawTopSpaceColor = mixColor([0, 10, 42], [14, 12, 48], centerBiomeNorm * 0.25);
+        const rawUpperWarmColor = mixColor([74, 78, 138], [122, 86, 150], centerBiomeNorm);
+        const rawUpperColdColor = mixColor([26, 78, 184], [54, 108, 204], centerBiomeNorm * 0.45);
+        const rawTropopauseColor = mixColor([170, 186, 255], [188, 188, 250], centerBiomeNorm * 0.35);
+        const rawLowerAirTarget = mixColor([136, 142, 190], [210, 134, 132], centerBiomeNorm);
+        const rawLowerAirColor = mixColor(centerAirBottomColor, rawLowerAirTarget, 0.42);
+
+        const deepSpaceColor = [0, 3, 16];
+        const upperSpaceColor = [3, 8, 28];
+        const highAtmosColor = [12, 24, 58];
+        const midAtmosColor = [26, 44, 86];
+        const lowAtmosColor = [52, 78, 128];
+        const lockedNearSpaceBottom = [30, 44, 78];
+
+        let topSpaceColor = mixColor(rawTopSpaceColor, deepSpaceColor, spaceBlend);
+        let upperWarmColor = mixColor(rawUpperWarmColor, upperSpaceColor, spaceBlend);
+        let upperColdColor = mixColor(rawUpperColdColor, highAtmosColor, spaceBlend);
+        let tropopauseColor = mixColor(rawTropopauseColor, midAtmosColor, spaceBlend);
+        let lowerAirColor = mixColor(rawLowerAirColor, lowAtmosColor, spaceBlend);
+        let bottomAirColor = mixColor(centerAirBottomColor, lowAtmosColor, spaceBlend * 0.9);
+
+        topSpaceColor = mixColor(topSpaceColor, deepSpaceColor, nearSpaceLock);
+        upperWarmColor = mixColor(upperWarmColor, upperSpaceColor, nearSpaceLock);
+        upperColdColor = mixColor(upperColdColor, highAtmosColor, nearSpaceLock);
+        tropopauseColor = mixColor(tropopauseColor, midAtmosColor, nearSpaceLock);
+        lowerAirColor = mixColor(lowerAirColor, lowAtmosColor, nearSpaceLock);
+        bottomAirColor = mixColor(bottomAirColor, lockedNearSpaceBottom, nearSpaceLock);
+
+        const lockedBoundaryY = lerp(centerBoundaryY, canvas.height * 0.42, nearSpaceLock);
+        const skyTopY = lockedBoundaryY - canvas.height * 1.4;
+        const upperWarmY = lockedBoundaryY - canvas.height * 0.88;
+        const upperColdY = lockedBoundaryY - canvas.height * 0.46;
+        const tropopauseY = lockedBoundaryY;
+        const lowerBlendY = lockedBoundaryY + canvas.height * 0.22;
+        const skyBottomY = canvas.height;
+
+        const backgroundGrad = ctx.createLinearGradient(0, skyTopY, 0, skyBottomY);
+        backgroundGrad.addColorStop(0, rgbString(topSpaceColor));
+        backgroundGrad.addColorStop(clamp((upperWarmY - skyTopY) / (skyBottomY - skyTopY), 0, 1), rgbString(upperWarmColor));
+        backgroundGrad.addColorStop(clamp((upperColdY - skyTopY) / (skyBottomY - skyTopY), 0, 1), rgbString(upperColdColor));
+        backgroundGrad.addColorStop(clamp((tropopauseY - skyTopY) / (skyBottomY - skyTopY), 0, 1), rgbString(tropopauseColor));
+        backgroundGrad.addColorStop(clamp((lowerBlendY - skyTopY) / (skyBottomY - skyTopY), 0, 1), rgbString(lowerAirColor));
+        backgroundGrad.addColorStop(1, rgbString(bottomAirColor));
+        ctx.fillStyle = backgroundGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const transitionHalfHeight = Math.max(70, canvas.height * 0.14);
+        const bandAlphaScale = (1 - smoothstep(0.24, 0.60, fade)) * (1 - nearSpaceLock);
+        if (bandAlphaScale > 0.001) {
+          for (let x = 0; x < canvas.width; x += air.stepPx) {
+            const boundaryY = getWarmBoundaryScreenYAtScreenX(x);
+            const biomeBaseTemp = getBiomeBaseTempAtScreenX(x);
+            const biomeNorm = biomeWarmNorm(biomeBaseTemp);
+            const airBottomColor = getAirBottomColorAtScreenX(x);
+            const rawLocalTropopauseColor = mixColor([170, 186, 255], [188, 188, 250], biomeNorm * 0.35);
+            const rawLocalLowerAirTarget = mixColor([136, 142, 190], [210, 134, 132], biomeNorm);
+            const rawLocalLowerAirColor = mixColor(airBottomColor, rawLocalLowerAirTarget, 0.42);
+            const localTropopauseColor = mixColor(mixColor(rawLocalTropopauseColor, midAtmosColor, spaceBlend), midAtmosColor, nearSpaceLock);
+            const localLowerAirColor = mixColor(mixColor(rawLocalLowerAirColor, lowAtmosColor, spaceBlend), lowAtmosColor, nearSpaceLock);
+
+            const bandTopY = boundaryY - transitionHalfHeight;
+            const bandBottomY = boundaryY + transitionHalfHeight;
+            const bandGrad = ctx.createLinearGradient(0, bandTopY, 0, bandBottomY);
+            bandGrad.addColorStop(0, rgbaString(localTropopauseColor, 0));
+            bandGrad.addColorStop(0.38, rgbaString(localTropopauseColor, 0.82 * bandAlphaScale));
+            bandGrad.addColorStop(0.5, rgbaString(localTropopauseColor, 0.96 * bandAlphaScale));
+            bandGrad.addColorStop(0.62, rgbaString(localLowerAirColor, 0.78 * bandAlphaScale));
+            bandGrad.addColorStop(1, rgbaString(localLowerAirColor, 0));
+            ctx.fillStyle = bandGrad;
+            ctx.fillRect(x, 0, air.stepPx, canvas.height);
+          }
+        }
+
+        if (fade > 0) {
+          ctx.fillStyle = `rgba(0,0,0,${0.72 * fade})`;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          ctx.fillStyle = `rgba(255,255,255,${0.25 + 0.75 * fade})`;
+          for (const star of world.stars) {
+            const twinkle = 0.55 + 0.45 * Math.sin(timeElapsed * 2.3 + star.twinkle);
+            ctx.globalAlpha = fade * twinkle;
+            ctx.fillRect(Math.floor(star.x), Math.floor(star.y), star.size, star.size);
+          }
+          ctx.globalAlpha = 1;
+        }
+      }
+
+      function drawPressureIsolines() {
+        if (!showIsolines) return;
+
+        const lineColor = "#00FF66";
+        ctx.save();
+        ctx.strokeStyle = lineColor;
+        ctx.fillStyle = lineColor;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([]);
+
+        for (let pressureMb = 900; pressureMb >= 100; pressureMb -= 100) {
+          let started = false;
+          let labelX = null;
+          let labelY = null;
+
+          ctx.beginPath();
+          for (let x = 0; x <= canvas.width; x += air.stepPx) {
+            const altitudeFeet = getAltitudeFeetForPressureAtScreenX(x, pressureMb);
+            const y = screenYFromFeet(altitudeFeet);
+
+            if (!started) {
+              ctx.moveTo(x, y);
+              started = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+
+            if (labelX === null && y >= 12 && y <= canvas.height - 12) {
+              labelX = x;
+              labelY = y;
+            }
+          }
+          ctx.stroke();
+
+          if (labelX !== null) {
+            const text = `${pressureMb} mb`;
+            ctx.font = "12px monospace";
+            ctx.textAlign = "left";
+            ctx.textBaseline = "bottom";
+            ctx.fillText(text, Math.min(labelX + 6, canvas.width - 64), labelY - 3);
+          }
+        }
+
+        ctx.restore();
+      }
+
+      function drawJetstreamBand() {
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 8]);
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+
         ctx.beginPath();
-        ctx.moveTo(px + 18, basketY - 5);
-        ctx.lineTo(px + 18, basketY + 5);
+        let startedTop = false;
+        for (let x = 0; x <= canvas.width; x += air.stepPx) {
+          const centerY = getWarmBoundaryScreenYAtScreenX(x);
+          const yTop = centerY - (JET_BAND_HALF_THICKNESS / SCREEN_FT_PER_PIXEL);
+          if (!startedTop) {
+            ctx.moveTo(x, yTop);
+            startedTop = true;
+          } else {
+            ctx.lineTo(x, yTop);
+          }
+        }
         ctx.stroke();
-      } else if (plane.vy < -120) {
+
         ctx.beginPath();
-        ctx.moveTo(px + 18, basketY - 5);
-        ctx.lineTo(px + 12, basketY + 3);
-        ctx.moveTo(px + 18, basketY - 5);
-        ctx.lineTo(px + 24, basketY + 3);
+        let startedBottom = false;
+        for (let x = 0; x <= canvas.width; x += air.stepPx) {
+          const centerY = getWarmBoundaryScreenYAtScreenX(x);
+          const yBottom = centerY + (JET_BAND_HALF_THICKNESS / SCREEN_FT_PER_PIXEL);
+          if (!startedBottom) {
+            ctx.moveTo(x, yBottom);
+            startedBottom = true;
+          } else {
+            ctx.lineTo(x, yBottom);
+          }
+        }
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+        ctx.strokeStyle = "#fff";
+        for (let x = 0; x < canvas.width; x += 28) {
+          const y = Math.floor(getWarmBoundaryScreenYAtScreenX(x));
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + 14, y);
+          ctx.lineTo(x + 9, y - 3);
+          ctx.moveTo(x + 14, y);
+          ctx.lineTo(x + 9, y + 3);
+          ctx.stroke();
+        }
+      }
+
+      function drawHorizonAndGround() {
+        const groundY = screenYFromFeet(GROUND_FEET_MSL);
+        const stripeWidth = 14;
+
+        for (let x = 0; x < canvas.width; x += stripeWidth) {
+          const palette = getGroundPaletteAtScreenX(x + stripeWidth * 0.5);
+          const grad = ctx.createLinearGradient(0, groundY, 0, canvas.height);
+          grad.addColorStop(0, rgbString(palette.top));
+          grad.addColorStop(1, rgbString(palette.bottom));
+          ctx.fillStyle = grad;
+          ctx.fillRect(x, Math.floor(groundY), stripeWidth + 1, canvas.height - groundY);
+        }
+
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, Math.floor(groundY));
+        ctx.lineTo(canvas.width, Math.floor(groundY));
         ctx.stroke();
       }
-    } else {
-      ctx.beginPath();
-      ctx.moveTo(px + 18, basketY - 5);
-      ctx.lineTo(px + 12, basketY + 4);
-      ctx.moveTo(px + 18, basketY - 5);
-      ctx.lineTo(px + 24, basketY + 4);
-      ctx.stroke();
-    }
 
-    if (burstPieces.length) {
-      ctx.fillStyle = "#fff";
-      for (const piece of burstPieces) {
-        const alpha = Math.max(0, piece.life / piece.maxLife);
-        ctx.globalAlpha = alpha;
-        ctx.fillRect(Math.floor(piece.x), Math.floor(piece.y), 3, 3);
+      function drawLowClouds() {
+        const groundY = screenYFromFeet(GROUND_FEET_MSL);
+        ctx.strokeStyle = "#fff";
+
+        for (const c of world.lowClouds) {
+          const y = Math.floor(c.y * groundY);
+          const x = Math.floor(c.x);
+          const w = c.w;
+          const h = c.h;
+          if (y > groundY - 8) continue;
+
+          ctx.strokeRect(x, y, w, h);
+          ctx.beginPath();
+          ctx.moveTo(x - 10, y + Math.floor(h / 2));
+          ctx.lineTo(x, y + Math.floor(h / 2));
+          ctx.stroke();
+        }
       }
-      ctx.globalAlpha = 1;
-    }
 
-    ctx.font = "bold 18px monospace";
-    ctx.fillStyle = "#fff";
-    const label = balloonBurst ? "Balloon Burst!" : `Balloon ${balloonPressureMb} mb`;
-    ctx.fillText(label, px - Math.floor(ctx.measureText(label).width / 2) + 18, balloonTopY - 46);
-  }
+      function drawCritters() {
+        const groundY = screenYFromFeet(GROUND_FEET_MSL);
 
-  function updateTopLeftHud() {
-    if (gameState === STATE_START) {
-      hudTopLeft.textContent = "";
-      return;
-    }
+        for (const critter of world.critters) {
+          ctx.strokeStyle = rgbString(getSpriteColorForBiomeKey(critter.biomeKey));
+          const x = Math.floor(critter.x);
+          const y = Math.floor(groundY - 4 - Math.sin((plane.xFeet / 400) + critter.bob) * 2);
+          const s = critter.size;
 
-    const trueAlt = Math.round(plane.yFeetMSL);
-    const balloonPressureMb = getBarometerMb().toFixed(1);
-    const jetstreamPressureMb = JETSTREAM_PRESSURE_MB.toFixed(0);
-    const jetstreamAltFt = Math.round(getTropopauseBandCenterHere());
-    hudTopLeft.textContent = `Altitude ${trueAlt} ft
-Balloon Pressure ${balloonPressureMb} mb
-Jetstream Ref ${jetstreamPressureMb} mb
-Jetstream Core ${jetstreamAltFt} ft`;
-  }
+          if (["rabbit", "hare"].includes(critter.kind)) {
+            ctx.strokeRect(x, y - s, s + 1, s - 1);
+            ctx.beginPath();
+            ctx.moveTo(x + 2, y - s); ctx.lineTo(x + 2, y - s - 5);
+            ctx.moveTo(x + 5, y - s); ctx.lineTo(x + 5, y - s - 6);
+            ctx.stroke();
+          } else if (["fox", "coyote", "deer", "caribou", "bison", "monkey"].includes(critter.kind)) {
+            ctx.strokeRect(x, y - s, s + 4, s - 1);
+            ctx.beginPath();
+            ctx.moveTo(x + 1, y); ctx.lineTo(x + 1, y + 4);
+            ctx.moveTo(x + 5, y); ctx.lineTo(x + 5, y + 4);
+            ctx.moveTo(x + s + 1, y); ctx.lineTo(x + s + 1, y + 4);
+            ctx.moveTo(x + s + 4, y); ctx.lineTo(x + s + 4, y + 4);
+            if (["deer", "caribou", "bison"].includes(critter.kind)) {
+              ctx.moveTo(x + s + 5, y - s + 1); ctx.lineTo(x + s + 9, y - s + 1);
+              ctx.moveTo(x + s + 7, y - s + 1); ctx.lineTo(x + s + 10, y - s - 3);
+              ctx.moveTo(x + s + 7, y - s + 1); ctx.lineTo(x + s + 10, y - s + 4);
+            } else {
+              ctx.moveTo(x + s + 4, y - 2); ctx.lineTo(x + s + 9, y - 5); ctx.lineTo(x + s + 6, y - 1);
+            }
+            ctx.stroke();
+          } else if (["owl", "hawk", "vulture", "loon", "parrot", "gull"].includes(critter.kind)) {
+            ctx.beginPath();
+            ctx.moveTo(x, y - 3); ctx.lineTo(x + 4, y - 7); ctx.lineTo(x + 8, y - 3);
+            ctx.moveTo(x + 8, y - 3); ctx.lineTo(x + 12, y - 7); ctx.lineTo(x + 16, y - 3);
+            ctx.stroke();
+          } else if (["snake", "fish", "lizard"].includes(critter.kind)) {
+            ctx.beginPath();
+            ctx.moveTo(x, y - 2);
+            ctx.lineTo(x + 4, y - 4);
+            ctx.lineTo(x + 8, y - 1);
+            ctx.lineTo(x + 12, y - 3);
+            ctx.lineTo(x + 16, y - 1);
+            ctx.stroke();
+          } else if (critter.kind === "frog") {
+            ctx.strokeRect(x + 1, y - 5, 8, 5);
+            ctx.beginPath();
+            ctx.moveTo(x + 1, y); ctx.lineTo(x - 2, y + 3);
+            ctx.moveTo(x + 9, y); ctx.lineTo(x + 12, y + 3);
+            ctx.stroke();
+          } else if (critter.kind === "scorpion") {
+            ctx.strokeRect(x + 2, y - 4, 8, 4);
+            ctx.beginPath();
+            ctx.moveTo(x + 10, y - 4); ctx.lineTo(x + 14, y - 7); ctx.lineTo(x + 16, y - 3);
+            ctx.moveTo(x + 2, y); ctx.lineTo(x, y + 3);
+            ctx.moveTo(x + 10, y); ctx.lineTo(x + 12, y + 3);
+            ctx.stroke();
+          }
+        }
+      }
 
-  function drawWarnings() {
-    if (gameState !== STATE_PLAYING) return;
+      function drawTrees() {
+        const groundY = screenYFromFeet(GROUND_FEET_MSL);
 
-    if (plane.yFeetMSL < 5000) {
-      const invert = Math.floor(performance.now() / 180) % 2 === 0;
-      ctx.fillStyle = invert ? "#fff" : "#000";
-      ctx.fillRect(canvas.width / 2 - 90, 24, 180, 34);
-      ctx.strokeStyle = "#fff";
-      ctx.strokeRect(canvas.width / 2 - 90, 24, 180, 34);
-      ctx.fillStyle = invert ? "#000" : "#fff";
-      ctx.font = "bold 24px monospace";
-      ctx.fillText("LOW ALT", canvas.width / 2 - 58, 47);
-    }
+        for (const tree of world.trees) {
+          ctx.strokeStyle = rgbString(getSpriteColorForBiomeKey(tree.biomeKey));
+          ctx.fillStyle = rgbString(getSpriteColorForBiomeKey(tree.biomeKey));
+          const x = Math.floor(tree.x);
+          const trunkTop = Math.floor(groundY - tree.h);
+          const trunkBottom = Math.floor(groundY);
+          const w = tree.width;
 
-    if (!balloonBurst && plane.yFeetMSL > SPACE_FADE_START_FEET) {
-      ctx.strokeStyle = "#fff";
-      ctx.strokeRect(canvas.width / 2 - 118, 108, 236, 32);
-      ctx.font = "bold 20px monospace";
-      ctx.fillStyle = "#fff";
-      ctx.fillText("NEAR SPACE", canvas.width / 2 - 58, 130);
-    }
+          if (tree.kind === "pine" || tree.kind === "spruce") {
+            ctx.beginPath();
+            ctx.moveTo(x, trunkTop + 4);
+            ctx.lineTo(x + tree.lean, trunkBottom);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, trunkTop);
+            ctx.lineTo(x - 5, trunkTop + 8);
+            ctx.lineTo(x + 5, trunkTop + 8);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, trunkTop + 6);
+            ctx.lineTo(x - 4, trunkTop + 13);
+            ctx.lineTo(x + 4, trunkTop + 13);
+            ctx.closePath();
+            ctx.stroke();
+          } else if (tree.kind === "oak" || tree.kind === "broadleaf") {
+            ctx.beginPath();
+            ctx.moveTo(x, trunkTop + 5);
+            ctx.lineTo(x + tree.lean, trunkBottom);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x, trunkTop + 6, 5, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x - 4, trunkTop + 11, 4, 0, Math.PI * 2);
+            ctx.arc(x + 4, trunkTop + 11, 4, 0, Math.PI * 2);
+            ctx.stroke();
+          } else if (tree.kind === "shrub") {
+            ctx.strokeRect(x - 5, trunkBottom - 8, 10, 7);
+            ctx.strokeRect(x - 7, trunkBottom - 5, 14, 5);
+          } else if (tree.kind === "palm") {
+            ctx.beginPath();
+            ctx.moveTo(x - 1, trunkBottom);
+            ctx.lineTo(x + 2, trunkBottom - 10);
+            ctx.lineTo(x + 4, trunkTop + 8);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x + 4, trunkTop + 8);
+            ctx.lineTo(x - 7, trunkTop + 6);
+            ctx.moveTo(x + 4, trunkTop + 8);
+            ctx.lineTo(x + 12, trunkTop + 5);
+            ctx.moveTo(x + 4, trunkTop + 8);
+            ctx.lineTo(x - 4, trunkTop + 1);
+            ctx.moveTo(x + 4, trunkTop + 8);
+            ctx.lineTo(x + 9, trunkTop + 1);
+            ctx.stroke();
+          } else if (tree.kind === "fern") {
+            ctx.beginPath();
+            ctx.moveTo(x, trunkBottom);
+            ctx.lineTo(x, trunkBottom - 8);
+            ctx.moveTo(x, trunkBottom - 6); ctx.lineTo(x - 7, trunkBottom - 10);
+            ctx.moveTo(x, trunkBottom - 6); ctx.lineTo(x + 7, trunkBottom - 10);
+            ctx.moveTo(x, trunkBottom - 3); ctx.lineTo(x - 6, trunkBottom - 5);
+            ctx.moveTo(x, trunkBottom - 3); ctx.lineTo(x + 6, trunkBottom - 5);
+            ctx.stroke();
+          } else if (tree.kind === "reed") {
+            ctx.beginPath();
+            ctx.moveTo(x - 3, trunkBottom); ctx.lineTo(x - 3, trunkBottom - 13);
+            ctx.moveTo(x + 1, trunkBottom); ctx.lineTo(x + 1, trunkBottom - 15);
+            ctx.moveTo(x + 5, trunkBottom); ctx.lineTo(x + 5, trunkBottom - 12);
+            ctx.stroke();
+            ctx.strokeRect(x - 4, trunkBottom - 15, 2, 4);
+            ctx.strokeRect(x, trunkBottom - 17, 2, 4);
+          } else if (tree.kind === "wave") {
+            ctx.beginPath();
+            ctx.moveTo(x - 10, trunkBottom - 2);
+            ctx.lineTo(x - 5, trunkBottom - 5);
+            ctx.lineTo(x, trunkBottom - 2);
+            ctx.lineTo(x + 5, trunkBottom - 5);
+            ctx.lineTo(x + 10, trunkBottom - 2);
+            ctx.stroke();
+          } else if (tree.kind === "foam") {
+            ctx.fillRect(x - 8, trunkBottom - 3, 4, 2);
+            ctx.fillRect(x - 1, trunkBottom - 5, 5, 2);
+            ctx.fillRect(x + 7, trunkBottom - 3, 3, 2);
+          } else if (tree.kind === "berg") {
+            ctx.beginPath();
+            ctx.moveTo(x - 9, trunkBottom);
+            ctx.lineTo(x - 4, trunkBottom - 8);
+            ctx.lineTo(x + 1, trunkBottom - 12);
+            ctx.lineTo(x + 7, trunkBottom - 7);
+            ctx.lineTo(x + 10, trunkBottom);
+            ctx.stroke();
+          } else if (tree.kind === "reef") {
+            ctx.beginPath();
+            ctx.moveTo(x - 10, trunkBottom);
+            ctx.lineTo(x - 6, trunkBottom - 4);
+            ctx.lineTo(x - 1, trunkBottom - 2);
+            ctx.lineTo(x + 4, trunkBottom - 7);
+            ctx.lineTo(x + 10, trunkBottom);
+            ctx.stroke();
+          } else if (tree.kind === "islet") {
+            ctx.beginPath();
+            ctx.moveTo(x - 10, trunkBottom);
+            ctx.lineTo(x - 4, trunkBottom - 5);
+            ctx.lineTo(x + 3, trunkBottom - 5);
+            ctx.lineTo(x + 10, trunkBottom);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, trunkBottom - 5);
+            ctx.lineTo(x, trunkBottom - 12);
+            ctx.stroke();
+          } else if (tree.kind === "cactus") {
+            ctx.beginPath();
+            ctx.moveTo(x, trunkBottom); ctx.lineTo(x, trunkBottom - 16);
+            ctx.moveTo(x - 4, trunkBottom - 10); ctx.lineTo(x, trunkBottom - 10); ctx.lineTo(x, trunkBottom - 6);
+            ctx.moveTo(x + 4, trunkBottom - 12); ctx.lineTo(x, trunkBottom - 12); ctx.lineTo(x, trunkBottom - 8);
+            ctx.stroke();
+          } else if (tree.kind === "rock" || tree.kind === "stone") {
+            ctx.beginPath();
+            ctx.moveTo(x - 8, trunkBottom);
+            ctx.lineTo(x - 3, trunkBottom - 5);
+            ctx.lineTo(x + 2, trunkBottom - 3);
+            ctx.lineTo(x + 7, trunkBottom - 7);
+            ctx.lineTo(x + 10, trunkBottom);
+            ctx.stroke();
+          } else if (tree.kind === "mesa" || tree.kind === "butte") {
+            ctx.beginPath();
+            ctx.moveTo(x - 10, trunkBottom);
+            ctx.lineTo(x - 6, trunkBottom - 12);
+            ctx.lineTo(x + 6, trunkBottom - 12);
+            ctx.lineTo(x + 10, trunkBottom);
+            ctx.stroke();
+          } else if (tree.kind === "snowmound") {
+            ctx.beginPath();
+            ctx.moveTo(x - 9, trunkBottom);
+            ctx.lineTo(x - 5, trunkBottom - 3);
+            ctx.lineTo(x, trunkBottom - 5);
+            ctx.lineTo(x + 5, trunkBottom - 3);
+            ctx.lineTo(x + 9, trunkBottom);
+            ctx.stroke();
+          } else if (tree.kind === "bare") {
+            ctx.beginPath();
+            ctx.moveTo(x, trunkBottom);
+            ctx.lineTo(x, trunkBottom - 12);
+            ctx.moveTo(x, trunkBottom - 8); ctx.lineTo(x - 4, trunkBottom - 11);
+            ctx.moveTo(x, trunkBottom - 6); ctx.lineTo(x + 5, trunkBottom - 9);
+            ctx.stroke();
+          } else if (tree.kind === "tuft" || tree.kind === "hay") {
+            ctx.beginPath();
+            ctx.moveTo(x, trunkBottom);
+            ctx.lineTo(x - 4, trunkBottom - 7);
+            ctx.moveTo(x, trunkBottom); ctx.lineTo(x, trunkBottom - 9);
+            ctx.moveTo(x, trunkBottom); ctx.lineTo(x + 4, trunkBottom - 7);
+            if (tree.kind === "hay") {
+              ctx.moveTo(x - 2, trunkBottom); ctx.lineTo(x - 6, trunkBottom - 5);
+              ctx.moveTo(x + 2, trunkBottom); ctx.lineTo(x + 6, trunkBottom - 5);
+            }
+            ctx.stroke();
+          } else if (tree.kind === "flower") {
+            ctx.beginPath();
+            ctx.moveTo(x, trunkBottom); ctx.lineTo(x, trunkBottom - 10);
+            ctx.stroke();
+            ctx.strokeRect(x - 2, trunkBottom - 13, 4, 4);
+          } else if (tree.kind === "spike") {
+            ctx.beginPath();
+            ctx.moveTo(x - 5, trunkBottom);
+            ctx.lineTo(x, trunkBottom - 14);
+            ctx.lineTo(x + 5, trunkBottom);
+            ctx.stroke();
+          }
+        }
+      }
 
-    if (inJetstreamBand()) {
-      ctx.strokeStyle = "#fff";
-      ctx.strokeRect(canvas.width / 2 - 100, 68, 200, 32);
-      ctx.font = "bold 20px monospace";
-      ctx.fillStyle = "#fff";
-      ctx.fillText("JETSTREAM", canvas.width / 2 - 58, 90);
-    }
-  }
+      function drawCitySprite(worldFeet, label, style = "city") {
+        const x = Math.floor(planeScreenX() + (worldFeet - tripProgressFeet()) / SCREEN_FT_PER_PIXEL);
+        const groundY = Math.floor(screenYFromFeet(GROUND_FEET_MSL));
+        if (x < -160 || x > canvas.width + 160) return;
 
-  function updateBottomHud() {
-    const elapsed = formatTime(timeElapsed);
-    const remaining = milesRemaining();
-    const biomeName = currentBiomeBand().biome.name;
+        ctx.strokeStyle = "#fff";
+        ctx.fillStyle = "#000";
 
-    if (gameState === STATE_START) {
-      hudBottom.textContent = `Flight Time: ${elapsed}    Distance Remaining: ${ROUTE_MILES} mi    Booster Pack: None    Biome: ${biomeName}`;
-      return;
-    }
+        const buildings = style === "city"
+          ? [
+            { dx: -54, w: 16, h: 34 },
+            { dx: -34, w: 20, h: 52 },
+            { dx: -10, w: 18, h: 40 },
+            { dx: 12, w: 24, h: 64 },
+            { dx: 40, w: 16, h: 44 }
+          ]
+          : [
+            { dx: -52, w: 22, h: 42 },
+            { dx: -26, w: 18, h: 56 },
+            { dx: -4, w: 26, h: 72 },
+            { dx: 26, w: 18, h: 50 },
+            { dx: 48, w: 14, h: 38 }
+          ];
 
-    if (gameState === STATE_FINISHED) {
-      hudBottom.textContent = `Flight Time: ${elapsed}    Distance Remaining: 0 mi    Booster Pack: ${smoke.inventory > 0 ? `Ready x${smoke.inventory}` : "None"}    Biome: ${biomeName}`;
-      return;
-    }
+        for (const b of buildings) {
+          ctx.strokeRect(x + b.dx, groundY - b.h, b.w, b.h);
+          const cols = Math.max(1, Math.floor(b.w / 6));
+          const rows = Math.max(1, Math.floor((b.h - 8) / 9));
+          for (let cy = 0; cy < rows; cy++) {
+            for (let cx = 0; cx < cols; cx++) {
+              ctx.fillRect(x + b.dx + 3 + cx * 6, groundY - b.h + 4 + cy * 8, 2, 2);
+            }
+          }
+        }
 
-    const smokeStatus = smoke.boostTimer > 0
-      ? `Boosting${smoke.inventory > 0 ? ` (${smoke.inventory})` : ""}`
-      : (smoke.inventory > 0 ? `Ready x${smoke.inventory}` : (smoke.grapple.state !== "idle" ? "Grappling" : "None"));
-    hudBottom.textContent = `Flight Time: ${elapsed}    Distance Remaining: ${remaining} mi    Booster Pack: ${smokeStatus}    Biome: ${biomeName}`;
-  }
+        if (style === "nyc") {
+          ctx.beginPath();
+          ctx.moveTo(x + 9, groundY - 72);
+          ctx.lineTo(x + 17, groundY - 96);
+          ctx.lineTo(x + 25, groundY - 72);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(x - 30, groundY - 52);
+          ctx.lineTo(x - 18, groundY - 74);
+          ctx.lineTo(x - 6, groundY - 52);
+          ctx.stroke();
+        }
 
-  function drawCenteredPanel(lines, footer = "") {
-    const w = Math.min(760, canvas.width - 60);
-    const h = Math.min(390, canvas.height - 80);
-    const x = Math.floor((canvas.width - w) / 2);
-    const y = Math.floor((canvas.height - h) / 2);
+        ctx.font = "bold 18px monospace";
+        ctx.fillStyle = "#fff";
+        ctx.fillText(label, x - Math.floor(ctx.measureText(label).width / 2), groundY - 110);
+      }
 
-    ctx.fillStyle = "#000";
-    ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, w, h);
+      function drawSun() {
+        const x = canvas.width - 110;
+        const y = 92;
+        const r = 34;
+        const winkPhase = (timeElapsed * 0.55) % 8;
+        const isWinking = !balloonBurst && winkPhase > 6.85 && winkPhase < 7.45;
 
-    ctx.fillStyle = "#fff";
-    ctx.textAlign = "center";
-    for (const line of lines) {
-      ctx.font = line.font;
-      ctx.fillText(line.text, canvas.width / 2, y + line.y);
-    }
-    if (footer) {
-      ctx.font = "18px monospace";
-      ctx.fillText(footer, canvas.width / 2, y + h - 28);
-    }
-    ctx.textAlign = "left";
-  }
+        ctx.save();
+        ctx.globalAlpha = 1 - spaceFadeAlpha() * 0.7;
+        ctx.translate(x, y);
+        ctx.rotate(sunAngle);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 12; i++) {
+          const a = (Math.PI * 2 * i) / 12;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * (r + 8), Math.sin(a) * (r + 8));
+          ctx.lineTo(Math.cos(a) * (r + 22), Math.sin(a) * (r + 22));
+          ctx.stroke();
+        }
+        ctx.restore();
 
-  function drawStartScreen() {
-    if (gameState !== STATE_START) return;
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.stroke();
 
-    drawCitySprite(START_CITY_X, "SEATTLE", "city");
-    drawCitySprite(FINISH_CITY_X, "NYC", "nyc");
+        ctx.fillStyle = "#fff";
+        if (balloonBurst) {
+          ctx.fillRect(x - 14, y - 10, 5, 5);
+          ctx.fillRect(x + 9, y - 10, 5, 5);
+          ctx.beginPath();
+          ctx.arc(x, y + 8, 6, 0, Math.PI * 2);
+          ctx.stroke();
+        } else {
+          ctx.fillRect(x - 12, y - 8, 4, 4);
+          if (isWinking) {
+            ctx.beginPath();
+            ctx.moveTo(x + 8, y - 6);
+            ctx.lineTo(x + 14, y - 10);
+            ctx.lineTo(x + 20, y - 6);
+            ctx.stroke();
+          } else {
+            ctx.fillRect(x + 8, y - 8, 4, 4);
+          }
 
-    drawCenteredPanel([
-      { text: "START GAME", font: "bold 34px monospace", y: 56 },
-      { text: "Fly from Seattle to New York City", font: "22px monospace", y: 112 },
-      { text: "Try and Get the Shortest Time!", font: "22px monospace", y: 148 },
-      { text: "Pay attention to the height of the Jet Stream and the Air Pressure", font: "20px monospace", y: 192 },
-      { text: "Your speed will increase in the Jet Stream!", font: "20px monospace", y: 228 },
-      { text: "Use Space for grapple; use Booster Packs with B", font: "20px monospace", y: 264 }
-    ], "Press Space, Enter, or Click to Start");
-  }
+          ctx.beginPath();
+          ctx.arc(x, y + 2, 14, 0.18 * Math.PI, 0.82 * Math.PI, false);
+          ctx.stroke();
+        }
+      }
 
-  function drawCrashMessage() {
-    if (gameState !== STATE_CRASHED) return;
+      function drawPlane() {
+        const px = planeScreenX();
+        const py = planeScreenY();
+        const bob = balloonBobOffset();
+        const balloonScale = balloonEnvelopeScale();
+        const balloonRadiusX = 10 * balloonScale;
+        const balloonRadiusY = 10 * balloonScale;
+        const balloonTopY = py - 30 + bob;
+        const basketY = py + bob;
+        const balloonPressureMb = getBarometerMb().toFixed(1);
 
-    drawCenteredPanel([
-      { text: balloonBurst ? "BALLOON LOST" : "FLIGHT ENDED", font: "bold 28px monospace", y: 74 },
-      { text: `Flight Time: ${formatTime(timeElapsed)}`, font: "22px monospace", y: 132 },
-      { text: `Distance Remaining: ${milesRemaining()} mi`, font: "22px monospace", y: 170 },
-      { text: `Time in the Jet Stream: ${Math.floor(score)} s`, font: "20px monospace", y: 214 }
-    ], "Press R to restart");
-  }
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
 
-  function drawFinishMessage() {
-    if (gameState !== STATE_FINISHED) return;
+        if (!balloonBurst) {
+          ctx.beginPath();
+          ctx.ellipse(px + 18, balloonTopY, balloonRadiusX, balloonRadiusY, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.fillStyle = "#22F";
+          ctx.fill();
 
-    drawCenteredPanel([
-      { text: "ARRIVED IN NEW YORK CITY", font: "bold 28px monospace", y: 74 },
-      { text: `Final Flight Time: ${formatTime(timeElapsed)}`, font: "22px monospace", y: 132 },
-      { text: `Route Distance: ${ROUTE_MILES} mi`, font: "22px monospace", y: 170 },
-      { text: `Time in the Jet Stream: ${Math.floor(score)} s`, font: "20px monospace", y: 214 }
-    ], "Press R to fly again");
-  }
+          ctx.beginPath();
+          ctx.moveTo(px + 18 - balloonRadiusX * 0.9, balloonTopY + balloonRadiusY * 0.45);
+          ctx.lineTo(px + 12, basketY - 10);
+          ctx.moveTo(px + 18 + balloonRadiusX * 0.9, balloonTopY + balloonRadiusY * 0.45);
+          ctx.lineTo(px + 24, basketY - 10);
+          ctx.stroke();
+        }
 
-  function loop(now) {
-    const dt = Math.min(0.033, (now - lastTime) / 1000);
-    lastTime = now;
+        ctx.strokeRect(px + 12, basketY - 10, 12, 5);
 
-    update(dt);
-    sunAngle += dt * 0.9;
+        if (!balloonBurst && smoke.inventory >= 1) {
+          ctx.beginPath();
+          ctx.moveTo(px + 12, basketY - 6);
+          ctx.lineTo(px - 6, basketY - 2);
+          ctx.stroke();
+          drawBoosterPack(px - 14, basketY - 1, true);
+        }
+        if (!balloonBurst && smoke.inventory >= 2) {
+          ctx.beginPath();
+          ctx.moveTo(px + 12, basketY - 3);
+          ctx.lineTo(px - 18, basketY + 5);
+          ctx.stroke();
+          drawBoosterPack(px - 28, basketY + 7, true);
+        }
 
-    drawSky();
-    drawSun();
-    drawJetstreamBand();
-    drawPressureIsolines();
-    drawBoosterTowers();
-    drawHorizonAndGround();
-    drawLowClouds();
-    drawTrees();
-    drawCritters();
-    drawCitySprite(START_CITY_X, "SEATTLE", "city");
-    drawCitySprite(FINISH_CITY_X, "NYC", "nyc");
-    drawSmokeTrail();
-    drawPlane();
-    updateTopLeftHud();
-    drawWarnings();
-    updateBottomHud();
-    drawStartScreen();
-    drawCrashMessage();
-    drawFinishMessage();
+        if (!balloonBurst) {
+          if (plane.vy > 120) {
+            ctx.beginPath();
+            ctx.moveTo(px + 18, basketY - 5);
+            ctx.lineTo(px + 18, basketY + 5);
+            ctx.stroke();
+          } else if (plane.vy < -120) {
+            ctx.beginPath();
+            ctx.moveTo(px + 18, basketY - 5);
+            ctx.lineTo(px + 12, basketY + 3);
+            ctx.moveTo(px + 18, basketY - 5);
+            ctx.lineTo(px + 24, basketY + 3);
+            ctx.stroke();
+          }
+        } else {
+          ctx.beginPath();
+          ctx.moveTo(px + 18, basketY - 5);
+          ctx.lineTo(px + 12, basketY + 4);
+          ctx.moveTo(px + 18, basketY - 5);
+          ctx.lineTo(px + 24, basketY + 4);
+          ctx.stroke();
+        }
 
-    requestAnimationFrame(loop);
-  }
+        if (burstPieces.length) {
+          ctx.fillStyle = "#fff";
+          for (const piece of burstPieces) {
+            const alpha = Math.max(0, piece.life / piece.maxLife);
+            ctx.globalAlpha = alpha;
+            ctx.fillRect(Math.floor(piece.x), Math.floor(piece.y), 3, 3);
+          }
+          ctx.globalAlpha = 1;
+        }
 
-  resize();
-  syncHelp();
-  syncAudioMuteStates();
-  resetGame();
-  requestAnimationFrame(loop);
-})();
-</script>
+        ctx.font = "bold 18px monospace";
+        ctx.fillStyle = "#fff";
+        const label = balloonBurst ? "Balloon Burst!" : `${balloonPressureMb} mb`;
+        ctx.fillText(label, px - Math.floor(ctx.measureText(label).width / 2) + 18, balloonTopY - 46);
+      }
+
+      function updateTopLeftHud() {
+        if (gameState === STATE_START) {
+          hudTopLeft.textContent = "";
+          return;
+        }
+
+        const trueAlt = Math.round(plane.yFeetMSL);
+        const balloonPressureMb = getBarometerMb().toFixed(1);
+        hudTopLeft.textContent = `Altitude ${trueAlt} ft
+Pressure ${balloonPressureMb} mb`;
+      }
+
+      function drawWarnings() {
+        if (gameState !== STATE_PLAYING) return;
+
+        if (plane.yFeetMSL < 5000) {
+          const invert = Math.floor(performance.now() / 180) % 2 === 0;
+          ctx.fillStyle = invert ? "#fff" : "#000";
+          ctx.fillRect(canvas.width / 2 - 90, 24, 180, 34);
+          ctx.strokeStyle = "#fff";
+          ctx.strokeRect(canvas.width / 2 - 90, 24, 180, 34);
+          ctx.fillStyle = invert ? "#000" : "#fff";
+          ctx.font = "bold 24px monospace";
+          ctx.fillText("LOW ALT", canvas.width / 2 - 58, 47);
+        }
+
+        if (!balloonBurst && plane.yFeetMSL > SPACE_FADE_START_FEET) {
+          ctx.strokeStyle = "#fff";
+          ctx.strokeRect(canvas.width / 2 - 118, 108, 236, 32);
+          ctx.font = "bold 20px monospace";
+          ctx.fillStyle = "#fff";
+          ctx.fillText("NEAR SPACE", canvas.width / 2 - 58, 130);
+        }
+
+        if (inJetstreamBand()) {
+          ctx.strokeStyle = "#fff";
+          ctx.strokeRect(canvas.width / 2 - 100, 68, 200, 32);
+          ctx.font = "bold 20px monospace";
+          ctx.fillStyle = "#fff";
+          ctx.fillText("JETSTREAM", canvas.width / 2 - 58, 90);
+        }
+      }
+
+      function boosterIconHTML() {
+        return '<svg width="18" height="22" viewBox="0 0 18 22" aria-hidden="true" style="display:inline-block;vertical-align:middle;margin:0 3px 0 3px;"><g fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="square"><rect x="4" y="6" width="10" height="14"></rect><path d="M7 6 L9 1 L11 5"></path><path d="M14 12 L17 12"></path></g></svg>';
+      }
+
+      function boostersHudHTML() {
+        if (smoke.grapple.state !== "idle" && smoke.inventory <= 0) {
+          return "Grappling";
+        }
+
+        if (smoke.inventory <= 0) {
+          return "None";
+        }
+
+        let icons = "";
+        for (let i = 0; i < smoke.inventory; i++) {
+          icons += boosterIconHTML();
+        }
+
+        return smoke.boostTimer > 0 ? `Boosting ${icons}` : icons;
+      }
+
+      function updateBottomHud() {
+        const elapsed = formatTime(timeElapsed);
+        const remaining = milesRemaining();
+        const biomeName = currentBiomeBand().biome.name;
+
+        let distanceText = `${remaining} mi`;
+        if (gameState === STATE_START) distanceText = `${ROUTE_MILES} mi`;
+        if (gameState === STATE_FINISHED) distanceText = `0 mi`;
+
+        const boostersHTML = gameState === STATE_START ? "None" : boostersHudHTML();
+
+        hudBottom.innerHTML =
+          `<div>Flight Time: ${elapsed}    Distance Remaining: ${distanceText}</div>` +
+          `<div>Boosters: ${boostersHTML}    Biome: ${biomeName}</div>`;
+      }
+
+      function drawCenteredPanel(lines, footer = "") {
+        const w = Math.min(760, canvas.width - 60);
+        const h = Math.min(390, canvas.height - 80);
+        const x = Math.floor((canvas.width - w) / 2);
+        const y = Math.floor((canvas.height - h) / 2);
+
+        ctx.fillStyle = "#000";
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, w, h);
+
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        for (const line of lines) {
+          ctx.font = line.font;
+          ctx.fillText(line.text, canvas.width / 2, y + line.y);
+        }
+        if (footer) {
+          ctx.font = "18px monospace";
+          ctx.fillText(footer, canvas.width / 2, y + h - 28);
+        }
+        ctx.textAlign = "left";
+      }
+
+      function drawStartScreen() {
+        if (gameState !== STATE_START) return;
+
+        drawCitySprite(START_CITY_X, "SEATTLE", "city");
+        drawCitySprite(FINISH_CITY_X, "NYC", "nyc");
+
+        drawCenteredPanel([
+          { text: "START GAME", font: "bold 34px monospace", y: 56 },
+          { text: "Fly from Seattle to New York City", font: "22px monospace", y: 112 },
+          { text: "Try and Get the Shortest Time!", font: "22px monospace", y: 148 },
+          { text: "Pay attention to the height of the Jet Stream and the Air Pressure", font: "20px monospace", y: 192 },
+          { text: "Your speed will increase in the Jet Stream!", font: "20px monospace", y: 228 },
+          { text: "Use Space for grapple; use Booster Packs with B", font: "20px monospace", y: 264 }
+        ], "Press Space, Enter, or Click to Start");
+      }
+
+      function drawCrashMessage() {
+        if (gameState !== STATE_CRASHED) return;
+
+        drawCenteredPanel([
+          { text: balloonBurst ? "BALLOON LOST" : "FLIGHT ENDED", font: "bold 28px monospace", y: 74 },
+          { text: `Flight Time: ${formatTime(timeElapsed)}`, font: "22px monospace", y: 132 },
+          { text: `Distance Remaining: ${milesRemaining()} mi`, font: "22px monospace", y: 170 },
+          { text: `Time in the Jet Stream: ${Math.floor(score)} s`, font: "20px monospace", y: 214 }
+        ], "Press R to restart");
+      }
+
+      function drawFinishMessage() {
+        if (gameState !== STATE_FINISHED) return;
+
+        const w = Math.min(760, canvas.width - 60);
+        const h = Math.min(470, canvas.height - 80);
+        const x = Math.floor((canvas.width - w) / 2);
+        const y = Math.floor((canvas.height - h) / 2) - 28;
+        const centerX = x + w / 2;
+        const activeBoard = finishNameEntryActive
+          ? getProjectedLeaderboard(finishRunTimeSeconds, finishNameBuffer.trim() || "PLAYER")
+          : leaderboard;
+        const leaderboardLines = getLeaderboardLines(activeBoard);
+        const cursorVisible = finishNameEntryActive && Math.floor(finishCursorTimer * 2) % 2 === 0;
+        const promptName = finishNameBuffer + (cursorVisible ? "_" : "");
+
+        ctx.fillStyle = "#000";
+        ctx.fillRect(x, y, w, h);
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, w, h);
+
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.font = "bold 28px monospace";
+        ctx.fillText("ARRIVED IN NEW YORK CITY", centerX, y + 48);
+
+        ctx.font = "22px monospace";
+        ctx.fillText(`Final Flight Time: ${formatTime(finishRunTimeSeconds || timeElapsed)}`, centerX, y + 92);
+        ctx.fillText(`Route Distance: ${ROUTE_MILES} mi`, centerX, y + 124);
+        ctx.fillText(`Time in the Jet Stream: ${Math.floor(score)} s`, centerX, y + 156);
+
+        ctx.font = "bold 22px monospace";
+        const headline = finishRunQualified
+          ? (finishRunWasFastest ? "FAST TIME!" : `LEADERBOARD!  RANK #${finishRunRank}`)
+          : "TOP TIMES";
+        ctx.fillText(headline, centerX, y + 198);
+
+        ctx.font = "20px monospace";
+        for (let i = 0; i < leaderboardLines.length; i++) {
+          ctx.fillText(leaderboardLines[i], centerX, y + 234 + i * 26);
+        }
+
+        ctx.font = "20px monospace";
+        if (finishNameEntryActive) {
+          const entryPromptLabel = finishRunWasFastest ? "Fast Time!" : "Leaderboard!";
+          const promptPanelX = x + 58;
+          const promptPanelY = y + h - 92;
+          const promptPanelW = w - 116;
+          const promptPanelH = 64;
+          const promptTextX = promptPanelX + 16;
+
+          ctx.fillStyle = "#000";
+          ctx.fillRect(promptPanelX, promptPanelY, promptPanelW, promptPanelH);
+          ctx.strokeStyle = "#fff";
+          ctx.lineWidth = 2;
+          ctx.strokeRect(promptPanelX, promptPanelY, promptPanelW, promptPanelH);
+
+          ctx.fillStyle = "#fff";
+          ctx.textAlign = "left";
+          ctx.fillText(`${entryPromptLabel} Enter Name: ${promptName}`, promptTextX, promptPanelY + 24);
+          ctx.font = "18px monospace";
+          ctx.fillText("Press Enter to save your score", promptTextX, promptPanelY + 50);
+          ctx.textAlign = "center";
+        } else if (finishInsertedScore && finishRunQualified) {
+          ctx.font = "18px monospace";
+          ctx.fillText("Press R to fly again", centerX, y + h - 30);
+        } else {
+          ctx.fillText("Press R to fly again", centerX, y + h - 30);
+        }
+
+        ctx.textAlign = "left";
+      }
+
+      function loop(now) {
+        const dt = Math.min(0.033, (now - lastTime) / 1000);
+        lastTime = now;
+
+        update(dt);
+        if (gameState === STATE_FINISHED && finishNameEntryActive) {
+          finishCursorTimer += dt;
+        }
+        sunAngle += dt * 0.9;
+
+        drawSky();
+        drawSun();
+        drawJetstreamBand();
+        drawPressureIsolines();
+        drawBoosterTowers();
+        drawHorizonAndGround();
+        drawLowClouds();
+        drawTrees();
+        drawCritters();
+        drawCitySprite(START_CITY_X, "SEATTLE", "city");
+        drawCitySprite(FINISH_CITY_X, "NYC", "nyc");
+        drawSmokeTrail();
+        drawPlane();
+        updateTopLeftHud();
+        drawWarnings();
+        updateBottomHud();
+        drawStartScreen();
+        drawCrashMessage();
+        drawFinishMessage();
+
+        requestAnimationFrame(loop);
+      }
+
+      resize();
+      syncHelp();
+      syncAudioMuteStates();
+      resetGame();
+      requestAnimationFrame(loop);
+    })();
+  </script>
 </body>
+
 </html>
