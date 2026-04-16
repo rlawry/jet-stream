@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Jet Stream Flight</title>
+  <title>Jetstream Density Flight</title>
   <style>
     html,
     body {
@@ -25,37 +25,42 @@
 
     #hudTopLeft {
       position: fixed;
-      left: 12px;
-      top: 12px;
+      left: clamp(6px, 1vw, 12px);
+      top: clamp(6px, 1vw, 12px);
       background: #000;
       border: 2px solid #fff;
-      padding: 10px 14px;
-      line-height: 1.5;
-      font-size: 24px;
+      padding: clamp(6px, 1vw, 10px) clamp(8px, 1.2vw, 14px);
+      line-height: 1.35;
+      font-size: clamp(14px, 1.8vw, 24px);
       white-space: pre-line;
       pointer-events: none;
       z-index: 10;
       color: #fff;
       text-align: left;
-      min-width: 300px;
+      min-width: min(300px, 42vw);
+      max-width: 44vw;
+      box-sizing: border-box;
     }
 
     #hudBottom {
       position: fixed;
       left: 50%;
-      bottom: 12px;
+      bottom: clamp(6px, 1vw, 12px);
       transform: translateX(-50%);
       background: #000;
       border: 2px solid #fff;
-      padding: 8px 14px;
-      line-height: 1.3;
-      font-size: 18px;
-      white-space: pre-line;
+      padding: clamp(5px, 0.9vw, 8px) clamp(8px, 1.2vw, 14px);
+      line-height: 1.25;
+      font-size: clamp(12px, 1.45vw, 18px);
+      white-space: normal;
       pointer-events: none;
       z-index: 10;
       color: #fff;
       text-align: center;
-      min-width: 420px;
+      width: min(620px, 78vw);
+      min-width: 0;
+      max-width: 78vw;
+      box-sizing: border-box;
     }
 
     #hudBottom svg {
@@ -66,17 +71,18 @@
     #helpHint,
     #help {
       position: fixed;
-      right: 10px;
-      top: 10px;
+      right: clamp(6px, 1vw, 10px);
+      top: clamp(6px, 1vw, 10px);
       background: #000;
       border: 2px solid #fff;
-      padding: 10px 12px;
-      line-height: 1.35;
-      font-size: 14px;
-      max-width: 390px;
+      padding: clamp(6px, 1vw, 10px) clamp(8px, 1.1vw, 12px);
+      line-height: 1.3;
+      font-size: clamp(11px, 1.15vw, 14px);
+      max-width: min(390px, 38vw);
       pointer-events: none;
       z-index: 10;
       color: #fff;
+      box-sizing: border-box;
     }
 
     #helpHint[hidden],
@@ -86,21 +92,25 @@
 
     #audioControls {
       position: fixed;
-      left: 12px;
-      bottom: 76px;
+      left: clamp(6px, 1vw, 12px);
+      bottom: clamp(84px, 12vh, 120px);
       display: flex;
-      gap: 8px;
+      flex-wrap: wrap;
+      gap: clamp(4px, 0.7vw, 8px);
       z-index: 20;
       pointer-events: auto;
+      max-width: min(44vw, 360px);
     }
 
     #audioControls button {
       background: #000;
       color: #fff;
       border: 2px solid #fff;
-      padding: 8px 12px;
-      font: 16px "Courier New", monospace;
+      padding: clamp(5px, 0.7vw, 8px) clamp(8px, 1vw, 12px);
+      font: clamp(12px, 1.2vw, 16px) "Courier New", monospace;
       cursor: pointer;
+      min-height: clamp(28px, 4.2vh, 38px);
+      box-sizing: border-box;
     }
 
     #audioControls button:hover {
@@ -120,32 +130,33 @@
 
     .mobileCluster {
       position: fixed;
-      bottom: 18px;
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: clamp(8px, 1.4vw, 12px);
       pointer-events: none;
     }
 
     #mobileLeftControls {
-      left: 12px;
+      left: clamp(8px, 1.4vw, 12px);
     }
 
     #mobileRightControls {
-      right: 12px;
+      right: clamp(8px, 1.4vw, 12px);
     }
 
     #mobileBeginWrap {
       position: fixed;
       left: 50%;
-      bottom: 18px;
+      bottom: clamp(74px, 11vh, 108px);
       transform: translateX(-50%);
       pointer-events: none;
     }
 
     .mobileControlButton {
-      width: 72px;
-      height: 72px;
+      width: clamp(54px, 9vw, 72px);
+      height: clamp(54px, 9vw, 72px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -153,17 +164,18 @@
       color: rgba(255, 255, 255, 0.5);
       border: 2px solid rgba(255, 255, 255, 0.5);
       padding: 0;
-      font: bold 18px "Courier New", monospace;
+      font: bold clamp(14px, 2vw, 18px) "Courier New", monospace;
       cursor: pointer;
       pointer-events: auto;
       touch-action: none;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
       user-select: none;
     }
 
     .mobileControlButton svg {
-      width: 36px;
-      height: 36px;
+      width: clamp(24px, 4.5vw, 36px);
+      height: clamp(24px, 4.5vw, 36px);
       display: block;
     }
 
@@ -180,9 +192,58 @@
     }
 
     #mobileBeginButton {
-      width: 128px;
-      font-size: 26px;
+      width: clamp(96px, 18vw, 128px);
+      font-size: clamp(18px, 3vw, 26px);
       letter-spacing: 1px;
+    }
+
+
+    @media (max-width: 900px), (max-height: 700px) {
+      #hudTopLeft {
+        max-width: 52vw;
+      }
+
+      #helpHint,
+      #help {
+        max-width: 44vw;
+      }
+
+      #hudBottom {
+        width: min(560px, 72vw);
+        max-width: 72vw;
+      }
+
+      #audioControls {
+        max-width: 50vw;
+      }
+    }
+
+    @media (max-width: 700px), (max-height: 560px) {
+      #hudTopLeft {
+        font-size: clamp(11px, 2.1vw, 16px);
+        max-width: 56vw;
+      }
+
+      #hudBottom {
+        width: min(480px, 68vw);
+        max-width: 68vw;
+        font-size: clamp(10px, 1.9vw, 14px);
+      }
+
+      #helpHint,
+      #help {
+        font-size: clamp(9px, 1.8vw, 12px);
+        max-width: 40vw;
+      }
+
+      #audioControls {
+        bottom: clamp(68px, 10vh, 92px);
+        max-width: 56vw;
+      }
+
+      #audioControls button {
+        padding: 4px 7px;
+      }
     }
   </style>
 </head>
@@ -193,13 +254,13 @@
   <div id="hudBottom"></div>
   <div id="helpHint">Press H for Instructions</div>
   <div id="help" hidden>
-    <strong>JET STREAM Instructions</strong><br>
+    <strong>JETSTREAM Instructions</strong><br>
     Up / W: climb<br>
     Down / S: descend<br>
     Space: extend/retract grappling hook<br>B: use Booster Pack<br><br>
-    Warm air raises the jet stream band.<br>
+    Warm air raises the jetstream band.<br>
     Cold air lowers it.<br>
-    Speed increases in the jet stream.<br>
+    Speed increases in the jetstream.<br>
     Press R to restart.<br>
     Press L for Pressure Isolines<br><br>
     <strong>Press H to Hide Instructions</strong>
@@ -325,23 +386,31 @@
         mobileBoosterButton.hidden = !showActionButtons;
       }
 
-      function bindHoldButton(button, keyNames) {
+      function bindHoldButton(button, keyNames, onPress = null, onRelease = null) {
         const setState = pressed => {
           for (const keyName of keyNames) keys[keyName] = pressed;
         };
         const press = e => {
           e.preventDefault();
+          if (button.setPointerCapture && e.pointerId != null) {
+            try {
+              button.setPointerCapture(e.pointerId);
+            } catch (err) { }
+          }
           setState(true);
+          if (onPress) onPress(e);
         };
         const release = e => {
           e.preventDefault();
           setState(false);
+          if (onRelease) onRelease(e);
         };
         button.addEventListener("pointerdown", press);
         button.addEventListener("pointerup", release);
         button.addEventListener("pointercancel", release);
         button.addEventListener("pointerleave", release);
         button.addEventListener("lostpointercapture", release);
+        button.addEventListener("contextmenu", e => e.preventDefault());
       }
 
       function bindTapButton(button, handler) {
@@ -349,15 +418,23 @@
           e.preventDefault();
           handler();
         });
+        button.addEventListener("contextmenu", e => e.preventDefault());
       }
 
       function initMobileControls() {
         bindHoldButton(mobileUpButton, ["arrowup", "w"]);
         bindHoldButton(mobileDownButton, ["arrowdown", "s"]);
         bindTapButton(mobileBeginButton, startRun);
-        bindTapButton(mobileGrappleButton, () => {
-          if (gameState === STATE_PLAYING) tryStartGrapple();
-        });
+        bindHoldButton(
+          mobileGrappleButton,
+          [" "],
+          () => {
+            if (gameState === STATE_PLAYING) tryStartGrapple();
+          },
+          () => {
+            keys[" "] = false;
+          }
+        );
         bindTapButton(mobileBoosterButton, () => {
           if (gameState === STATE_PLAYING) releaseSmokeBoost();
         });
@@ -2151,6 +2228,15 @@
         return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alpha})`;
       }
 
+
+      function uiScale() {
+        return clamp(Math.min(canvas.width / 1366, canvas.height / 768), 0.62, 1);
+      }
+
+      function ui(n) {
+        return Math.max(1, Math.round(n * uiScale()));
+      }
+
       function drawSky() {
         const fade = spaceFadeAlpha();
 
@@ -2907,15 +2993,16 @@ Pressure ${balloonPressureMb} mb`;
       }
 
       function drawCenteredPanel(lines, footer = "") {
-        const w = Math.min(760, canvas.width - 60);
-        const h = Math.min(390, canvas.height - 80);
+        const scale = uiScale();
+        const w = Math.min(ui(760), canvas.width - ui(40));
+        const h = Math.min(ui(390), canvas.height - ui(50));
         const x = Math.floor((canvas.width - w) / 2);
         const y = Math.floor((canvas.height - h) / 2);
 
         ctx.fillStyle = "#000";
         ctx.fillRect(x, y, w, h);
         ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = Math.max(1.5, 2 * scale);
         ctx.strokeRect(x, y, w, h);
 
         ctx.fillStyle = "#fff";
@@ -2925,8 +3012,8 @@ Pressure ${balloonPressureMb} mb`;
           ctx.fillText(line.text, canvas.width / 2, y + line.y);
         }
         if (footer) {
-          ctx.font = "18px monospace";
-          ctx.fillText(footer, canvas.width / 2, y + h - 28);
+          ctx.font = `${ui(18)}px monospace`;
+          ctx.fillText(footer, canvas.width / 2, y + h - ui(28));
         }
         ctx.textAlign = "left";
       }
@@ -2938,33 +3025,34 @@ Pressure ${balloonPressureMb} mb`;
         drawCitySprite(FINISH_CITY_X, "NYC", "nyc");
 
         drawCenteredPanel([
-          { text: "START GAME", font: "bold 34px monospace", y: 56 },
-          { text: "Fly from Seattle to New York City", font: "22px monospace", y: 112 },
-          { text: "Try and Get the Shortest Time!", font: "22px monospace", y: 148 },
-          { text: "Pay attention to the height of the Jet Stream and the Air Pressure", font: "20px monospace", y: 192 },
-          { text: "Your speed will increase in the Jet Stream!", font: "20px monospace", y: 228 },
-          { text: "Use Space for grapple; use Booster Packs with B", font: "20px monospace", y: 264 }
-        ], "Press Space, Enter, or Click to Start");
+          { text: "START GAME", font: `bold ${ui(34)}px monospace`, y: ui(56) },
+          { text: "Fly from Seattle to New York City", font: `${ui(22)}px monospace`, y: ui(112) },
+          { text: "Try and Get the Shortest Time!", font: `${ui(22)}px monospace`, y: ui(148) },
+          { text: "Pay attention to the height of the Jet Stream and the Air Pressure", font: `${ui(20)}px monospace`, y: ui(192) },
+          { text: "Your speed will increase in the Jet Stream!", font: `${ui(20)}px monospace`, y: ui(228) },
+          { text: "Use Space for grapple; use Booster Packs with B", font: `${ui(20)}px monospace`, y: ui(264) }
+        ], isMobileUI ? "Tap Begin! to Start" : "Press Space, Enter, or Click to Start");
       }
 
       function drawCrashMessage() {
         if (gameState !== STATE_CRASHED) return;
 
         drawCenteredPanel([
-          { text: balloonBurst ? "BALLOON LOST" : "FLIGHT ENDED", font: "bold 28px monospace", y: 74 },
-          { text: `Flight Time: ${formatTime(timeElapsed)}`, font: "22px monospace", y: 132 },
-          { text: `Distance Remaining: ${milesRemaining()} mi`, font: "22px monospace", y: 170 },
-          { text: `Time in the Jet Stream: ${Math.floor(score)} s`, font: "20px monospace", y: 214 }
+          { text: balloonBurst ? "BALLOON LOST" : "FLIGHT ENDED", font: `bold ${ui(28)}px monospace`, y: ui(74) },
+          { text: `Flight Time: ${formatTime(timeElapsed)}`, font: `${ui(22)}px monospace`, y: ui(132) },
+          { text: `Distance Remaining: ${milesRemaining()} mi`, font: `${ui(22)}px monospace`, y: ui(170) },
+          { text: `Time in the Jet Stream: ${Math.floor(score)} s`, font: `${ui(20)}px monospace`, y: ui(214) }
         ], "Press R to restart");
       }
 
       function drawFinishMessage() {
         if (gameState !== STATE_FINISHED) return;
 
-        const w = Math.min(760, canvas.width - 60);
-        const h = Math.min(470, canvas.height - 80);
+        const scale = uiScale();
+        const w = Math.min(ui(760), canvas.width - ui(40));
+        const h = Math.min(ui(470), canvas.height - ui(54));
         const x = Math.floor((canvas.width - w) / 2);
-        const y = Math.floor((canvas.height - h) / 2) - 28;
+        const y = Math.floor((canvas.height - h) / 2) - ui(18);
         const centerX = x + w / 2;
         const activeBoard = finishNameEntryActive
           ? getProjectedLeaderboard(finishRunTimeSeconds, finishNameBuffer.trim() || "PLAYER")
@@ -2976,56 +3064,56 @@ Pressure ${balloonPressureMb} mb`;
         ctx.fillStyle = "#000";
         ctx.fillRect(x, y, w, h);
         ctx.strokeStyle = "#fff";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = Math.max(1.5, 2 * scale);
         ctx.strokeRect(x, y, w, h);
 
         ctx.fillStyle = "#fff";
         ctx.textAlign = "center";
-        ctx.font = "bold 28px monospace";
-        ctx.fillText("ARRIVED IN NEW YORK CITY", centerX, y + 48);
+        ctx.font = `bold ${ui(28)}px monospace`;
+        ctx.fillText("ARRIVED IN NEW YORK CITY", centerX, y + ui(48));
 
-        ctx.font = "22px monospace";
-        ctx.fillText(`Final Flight Time: ${formatTime(finishRunTimeSeconds || timeElapsed)}`, centerX, y + 92);
-        ctx.fillText(`Route Distance: ${ROUTE_MILES} mi`, centerX, y + 124);
-        ctx.fillText(`Time in the Jet Stream: ${Math.floor(score)} s`, centerX, y + 156);
+        ctx.font = `${ui(22)}px monospace`;
+        ctx.fillText(`Final Flight Time: ${formatTime(finishRunTimeSeconds || timeElapsed)}`, centerX, y + ui(92));
+        ctx.fillText(`Route Distance: ${ROUTE_MILES} mi`, centerX, y + ui(124));
+        ctx.fillText(`Time in the Jet Stream: ${Math.floor(score)} s`, centerX, y + ui(156));
 
-        ctx.font = "bold 22px monospace";
+        ctx.font = `bold ${ui(22)}px monospace`;
         const headline = finishRunQualified
           ? (finishRunWasFastest ? "FAST TIME!" : `LEADERBOARD!  RANK #${finishRunRank}`)
           : "TOP TIMES";
-        ctx.fillText(headline, centerX, y + 198);
+        ctx.fillText(headline, centerX, y + ui(198));
 
-        ctx.font = "20px monospace";
+        ctx.font = `${ui(20)}px monospace`;
         for (let i = 0; i < leaderboardLines.length; i++) {
-          ctx.fillText(leaderboardLines[i], centerX, y + 234 + i * 26);
+          ctx.fillText(leaderboardLines[i], centerX, y + ui(234) + i * ui(26));
         }
 
-        ctx.font = "20px monospace";
+        ctx.font = `${ui(20)}px monospace`;
         if (finishNameEntryActive) {
           const entryPromptLabel = finishRunWasFastest ? "Fast Time!" : "Leaderboard!";
-          const promptPanelX = x + 58;
-          const promptPanelY = y + h - 92;
-          const promptPanelW = w - 116;
-          const promptPanelH = 64;
-          const promptTextX = promptPanelX + 16;
+          const promptPanelX = x + ui(58);
+          const promptPanelY = y + h - ui(92);
+          const promptPanelW = w - ui(116);
+          const promptPanelH = ui(64);
+          const promptTextX = promptPanelX + ui(16);
 
           ctx.fillStyle = "#000";
           ctx.fillRect(promptPanelX, promptPanelY, promptPanelW, promptPanelH);
           ctx.strokeStyle = "#fff";
-          ctx.lineWidth = 2;
+          ctx.lineWidth = Math.max(1.5, 2 * scale);
           ctx.strokeRect(promptPanelX, promptPanelY, promptPanelW, promptPanelH);
 
           ctx.fillStyle = "#fff";
           ctx.textAlign = "left";
-          ctx.fillText(`${entryPromptLabel} Enter Name: ${promptName}`, promptTextX, promptPanelY + 24);
-          ctx.font = "18px monospace";
-          ctx.fillText("Press Enter to save your score", promptTextX, promptPanelY + 50);
+          ctx.fillText(`${entryPromptLabel} Enter Name: ${promptName}`, promptTextX, promptPanelY + ui(24));
+          ctx.font = `${ui(18)}px monospace`;
+          ctx.fillText("Press Enter to save your score", promptTextX, promptPanelY + ui(50));
           ctx.textAlign = "center";
         } else if (finishInsertedScore && finishRunQualified) {
-          ctx.font = "18px monospace";
-          ctx.fillText("Press R to fly again", centerX, y + h - 30);
+          ctx.font = `${ui(18)}px monospace`;
+          ctx.fillText("Press R to fly again", centerX, y + h - ui(30));
         } else {
-          ctx.fillText("Press R to fly again", centerX, y + h - 30);
+          ctx.fillText("Press R to fly again", centerX, y + h - ui(30));
         }
 
         ctx.textAlign = "left";
